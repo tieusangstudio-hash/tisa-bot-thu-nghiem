@@ -548,11 +548,57 @@ def quet_nao() -> dict:
     return ra
 
 
+# Đường dẫn riêng của máy trong tệp chữ (kế hoạch dựng video, cấu hình kỹ năng... hay ghi đường dẫn tuyệt đối). Gói nhân bản đổi chúng sang
+# đường dẫn máy mới, nên cùng một tệp ở hai máy khác nhau từng chữ -> đồng bộ tưởng xung đột và ghi đường dẫn máy kia đè lên (thấy khi chạy thử 21/11).
+# Gửi lên Trạm: thay đường dẫn của máy bằng KÝ HIỆU; nhận về: thay ký hiệu bằng đường dẫn của máy nhận. Dấu tệp tính trên bản đã chuẩn hóa.
+KY_HIEU = (("bo_nao", "⟦TISA:BO_NAO⟧"), ("trang_thai", "⟦TISA:TRANG_THAI⟧"), ("goc", "⟦TISA:GOC⟧"), ("nha", "⟦TISA:NHA⟧"))
+TOI_DA_CHUAN_HOA = 5_000_000
+
+
+def _goc_may() -> list:
+    duong = {"bo_nao": str(BRAINS_DIR), "trang_thai": str(STATE_DIR), "goc": str(ROOT), "nha": str(Path.home())}
+    return sorted(((duong[k], kh) for k, kh in KY_HIEU if duong[k]), key=lambda x: -len(x[0]))
+
+
+def _la_chu(rel: str) -> bool:
+    return rel.lower().endswith(cm.DUOI_CHU)
+
+
+def chuan_hoa(rel: str, du_lieu: bytes) -> bytes:
+    if not _la_chu(rel) or len(du_lieu) > TOI_DA_CHUAN_HOA:
+        return du_lieu
+    try:
+        t = du_lieu.decode("utf-8")
+    except UnicodeDecodeError:
+        return du_lieu
+    moi = t
+    for duong, kh in _goc_may():
+        for dang in dict.fromkeys((json.dumps(duong)[1:-1], duong, duong.replace("\\", "/"))):
+            if dang and dang in moi:
+                moi = moi.replace(dang, kh)
+    return moi.encode("utf-8") if moi != t else du_lieu
+
+
+def tra_ve(rel: str, du_lieu: bytes) -> bytes:
+    if not _la_chu(rel):
+        return du_lieu
+    try:
+        t = du_lieu.decode("utf-8")
+    except UnicodeDecodeError:
+        return du_lieu
+    if "⟦TISA:" not in t:
+        return du_lieu
+    js = rel.lower().endswith((".json", ".jsonl"))
+    for duong, kh in _goc_may():
+        t = t.replace(kh, json.dumps(duong)[1:-1] if js else duong)
+    return t.encode("utf-8")
+
+
 def _bam_tep(khoa: bytes, p: Path, size: int, mt: int, chi_muc: dict, rel: str) -> str:
     c = chi_muc.get(rel)
     if c and c[0] == size and c[1] == mt:
         return c[2]
-    b = dau_tep(khoa, p.read_bytes())
+    b = dau_tep(khoa, chuan_hoa(rel, p.read_bytes()))
     chi_muc[rel] = [size, mt, b]
     return b
 
@@ -658,7 +704,7 @@ def _dong_bo(chi_keo: bool, bao) -> dict:
                     raise kq
                 if dau_tep(khoa, kq) != r["bam"]:
                     raise ValueError("dấu tệp không khớp")
-                _ghi_tep_nao(p, kq)
+                _ghi_tep_nao(p, tra_ve(remote, kq))
                 stt = p.stat()
                 chi_muc[local_rel] = [stt.st_size, stt.st_mtime_ns, r["bam"]]
                 dia_theo_local[remote] = (local_rel, (p, stt.st_size, stt.st_mtime_ns))
@@ -695,7 +741,7 @@ def _dong_bo(chi_keo: bool, bao) -> dict:
 
     def gui(t):
         remote, p, L, B = t
-        noi_dung = p.read_bytes()
+        noi_dung = chuan_hoa(remote, p.read_bytes())
         if dau_tep(khoa, noi_dung) != L:
             return "dang_ghi"                               # tệp đang được ghi dở, để vòng sau
         _goi("PUT", "/tep?" + urllib.parse.urlencode({"duong_dan": remote, "bam": L, "goc": B}), raw=ma_hoa(khoa, noi_dung, b"tep"), cho=300)
