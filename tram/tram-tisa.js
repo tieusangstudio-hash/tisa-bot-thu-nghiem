@@ -45,6 +45,19 @@ function bangNhau(a, b) {
   return k === 0;
 }
 
+// D1 thỉnh thoảng báo "D1_ERROR: internal error" khi nhiều máy/luồng cùng ghi (thấy khi đẩy 20.000 tệp đêm 21/11): thử lại vài lần.
+async function d1(fn) {
+  for (let i = 0; ; i++) {
+    try {
+      return await fn();
+    } catch (e) {
+      const m = String((e && e.message) || e);
+      if (i >= 3 || !/D1_ERROR|internal error|overloaded|busy|reset|timed out/i.test(m)) throw e;
+      await new Promise((r) => setTimeout(r, 150 * (i + 1) + Math.floor(Math.random() * 100)));
+    }
+  }
+}
+
 let daTaoBang = false;
 async function chuanBi(env) {
   if (daTaoBang) return;
@@ -62,7 +75,7 @@ async function mayGoi(req, env) {
   const h = req.headers.get("authorization") || "";
   const m = /^Bearer ([A-Za-z0-9]{6,40})\.([A-Za-z0-9_-]{20,100})$/.exec(h);
   if (!m) return null;
-  const r = await env.DB.prepare("SELECT * FROM may WHERE id = ?").bind(m[1]).first();
+  const r = await d1(() => env.DB.prepare("SELECT * FROM may WHERE id = ?").bind(m[1]).first());
   if (!r || r.trang_thai === "da_go") return null;
   return bangNhau(r.khoa_bam, await bam(m[2])) ? r : null;
 }
@@ -168,8 +181,8 @@ async function api(req, env, url) {
   if (p === "/nhip" && M === "POST") {
     const body = await doc();
     const dc = diaChiHopLe(String(body.dia_chi || ""), env);
-    await env.DB.prepare("UPDATE may SET lan_cuoi = ?, dia_chi = ?, ban = ?, he = ?, ten = COALESCE(NULLIF(?, ''), ten) WHERE id = ?")
-      .bind(now(), dc, String(body.ban || "").slice(0, 30), String(body.he || "").slice(0, 20), String(body.ten || "").slice(0, 60), may.id).run();
+    await d1(() => env.DB.prepare("UPDATE may SET lan_cuoi = ?, dia_chi = ?, ban = ?, he = ?, ten = COALESCE(NULLIF(?, ''), ten) WHERE id = ?")
+      .bind(now(), dc, String(body.ban || "").slice(0, 30), String(body.he || "").slice(0, 20), String(body.ten || "").slice(0, 60), may.id).run());
     const seq = await env.DB.prepare("SELECT COALESCE(MAX(seq), 0) AS s FROM tep").first();
     return json({ ok: true, may_id: may.id, vai: await bangVai(env), may: await danhSachMay(env), seq_tep: seq.s, gio: now() });
   }
@@ -225,7 +238,7 @@ async function api(req, env, url) {
     const b = url.searchParams.get("bam") || "";
     const goc = url.searchParams.get("goc") || "";
     if (!dd || dd.length > 900 || !/^[0-9a-f]{32,64}$/.test(b)) return loi(400, "Thiếu đường dẫn hoặc dấu tệp.");
-    const cu = await env.DB.prepare("SELECT bam, xoa FROM tep WHERE duong_dan = ?").bind(dd).first();
+    const cu = await d1(() => env.DB.prepare("SELECT bam, xoa FROM tep WHERE duong_dan = ?").bind(dd).first());
     const bamCu = cu && !cu.xoa ? cu.bam : "";
     if (bamCu === b) return json({ ok: true, giong: true });
     if (bamCu !== goc) return json({ ok: false, xung_dot: true, bam_tram: bamCu }, 409);
@@ -233,8 +246,8 @@ async function api(req, env, url) {
     if (len > TEP_TOI_DA) return loi(413, "Tệp quá lớn để đồng bộ.");
     const khoa = "noi-dung/" + b;
     if (!(await env.KHO.head(khoa))) await env.KHO.put(khoa, req.body);
-    await env.DB.prepare("INSERT INTO tep (duong_dan, bam, kich_thuoc, luc, xoa, seq, boi) VALUES (?1, ?2, ?3, ?4, 0, (SELECT COALESCE(MAX(seq), 0) + 1 FROM tep), ?5) ON CONFLICT(duong_dan) DO UPDATE SET bam = ?2, kich_thuoc = ?3, luc = ?4, xoa = 0, seq = (SELECT COALESCE(MAX(seq), 0) + 1 FROM tep), boi = ?5")
-      .bind(dd, b, len, now(), may.id).run();
+    await d1(() => env.DB.prepare("INSERT INTO tep (duong_dan, bam, kich_thuoc, luc, xoa, seq, boi) VALUES (?1, ?2, ?3, ?4, 0, (SELECT COALESCE(MAX(seq), 0) + 1 FROM tep), ?5) ON CONFLICT(duong_dan) DO UPDATE SET bam = ?2, kich_thuoc = ?3, luc = ?4, xoa = 0, seq = (SELECT COALESCE(MAX(seq), 0) + 1 FROM tep), boi = ?5")
+      .bind(dd, b, len, now(), may.id).run());
     return json({ ok: true });
   }
 

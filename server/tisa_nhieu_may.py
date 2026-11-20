@@ -744,8 +744,15 @@ def _dong_bo(chi_keo: bool, bao) -> dict:
         noi_dung = chuan_hoa(remote, p.read_bytes())
         if dau_tep(khoa, noi_dung) != L:
             return "dang_ghi"                               # tệp đang được ghi dở, để vòng sau
-        _goi("PUT", "/tep?" + urllib.parse.urlencode({"duong_dan": remote, "bam": L, "goc": B}), raw=ma_hoa(khoa, noi_dung, b"tep"), cho=300)
-        return "ok"
+        goi = ma_hoa(khoa, noi_dung, b"tep")
+        for lan in range(3):                                # lỗi tạm thời của Trạm/D1/mạng: thử lại ngay, không đợi vòng sau
+            try:
+                _goi("PUT", "/tep?" + urllib.parse.urlencode({"duong_dan": remote, "bam": L, "goc": B}), raw=goi, cho=300)
+                return "ok"
+            except LoiTram as e:
+                if lan == 2 or not (e.ma == 0 or e.ma >= 500):
+                    raise
+                time.sleep(1 + lan * 2)
     dung_som = False
     for n, ((remote, p, L, B), kq) in enumerate(_song_song(gui, can_day, dung=lambda: dung_som), 1):
         if kq == "ok":
@@ -824,9 +831,15 @@ def _song_song(ham, viec, dung=None):
 
 
 def _tai_noi_dung(bam: str) -> bytes:
-    r = _goi("GET", "/noi-dung/" + bam, tra_tho=True, cho=300)
-    with r:
-        return r.read()
+    for lan in range(3):
+        try:
+            r = _goi("GET", "/noi-dung/" + bam, tra_tho=True, cho=300)
+            with r:
+                return r.read()
+        except LoiTram as e:
+            if lan == 2 or not (e.ma == 0 or e.ma >= 500):
+                raise
+            time.sleep(1 + lan * 2)
 
 
 # ---- cấu hình
