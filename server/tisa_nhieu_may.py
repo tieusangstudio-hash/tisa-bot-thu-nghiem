@@ -44,6 +44,11 @@ from pathlib import Path
 
 import tisa_chuyen_may as cm
 
+try:    # ở cấp module: tệp dùng `from __future__ import annotations`, FastAPI đọc chú thích kiểu theo tên TOÀN CỤC.
+    from fastapi import Request    # Import trong gan() thì `req: Request` bị hiểu là tham số ?req= và mọi POST trả 422 "Field required".
+except Exception:  # noqa: BLE001 - dòng lệnh, test thuần không cần FastAPI
+    Request = None
+
 STATE_DIR = cm.STATE_DIR
 BRAINS_DIR = cm.BRAINS_DIR
 ROOT = cm.ROOT
@@ -397,8 +402,16 @@ def dia_chi_may() -> str:
     try:
         import remote_tunnel
         s = remote_tunnel.MANAGER.status()
-        return (s.get("url") or "") if s.get("enabled") else ""
-    except Exception:  # noqa: BLE001
+        url = (s.get("url") or "") if s.get("enabled") else ""
+        if not url and time.time() - _tt.get("luc_chan_doan", 0) > 600:
+            _tt["luc_chan_doan"] = time.time()
+            nhat_ky("chua_co_dia_chi", trang_thai=s.get("state"), che_do=s.get("mode"), bat=s.get("enabled"), loi=s.get("error"),
+                    ten_mien=s.get("hostnames"), log=list(getattr(remote_tunnel.MANAGER, "log", []))[-4:])
+        return url
+    except Exception as e:  # noqa: BLE001
+        if time.time() - _tt.get("luc_chan_doan", 0) > 600:
+            _tt["luc_chan_doan"] = time.time()
+            nhat_ky("loi_doc_duong_ham", loi=f"{type(e).__name__}: {e}"[:300])
         return ""
 
 
@@ -596,43 +609,56 @@ def _dong_bo(chi_keo: bool, bao) -> dict:
     for rel, x in dia.items():
         dia_theo_local[nguoc.get(rel, rel)] = (rel, x)
 
-    # ---- KÉO
+    # ---- KÉO (phân loại tuần tự, TẢI song song: mỗi tệp một vòng đi về Cloudflare khoảng nửa giây, tải lần lượt thì hàng chục nghìn tệp mất hàng giờ)
     while True:
         d = _goi("GET", f"/tep?sau={seq}", cho=60)
         hang = d.get("tep") or []
+        can_tai = []
         for r in hang:
             seq = max(seq, int(r["seq"]))
             remote = _nfc(r["duong_dan"])
             if remote.startswith(TIEN_TO_CAU_HINH):
-                _nhan_cau_hinh(khoa, r, goc)
+                try:
+                    _nhan_cau_hinh(khoa, r, goc)
+                except Exception as e:  # noqa: BLE001
+                    so["loi"] += 1
+                    nhat_ky("loi_nhan_cau_hinh", tep=remote, loi=str(e)[:150])
                 continue
             local_rel = _local_cua(remote, ten_map)
             if local_rel != remote:
                 ten_map[remote] = local_rel
             p = BRAINS_DIR / local_rel
             co = dia_theo_local.get(remote)
-            L = _bam_tep(khoa, co[1][0], co[1][1], co[1][2], chi_muc, co[0]) if co else ""
-            B = goc.get(remote, "")
             try:
-                if r.get("xoa"):
-                    if co and L == B:
-                        _cat_thung_rac(p, local_rel); so["xoa"] += 1
-                        dia_theo_local.pop(remote, None)
-                    goc.pop(remote, None)
-                    continue
-                if L == r["bam"]:
-                    goc[remote] = r["bam"]; so["giong"] += 1
-                    continue
-                if co and L != B and B != "" and not moi_ghep:
+                L = _bam_tep(khoa, co[1][0], co[1][1], co[1][2], chi_muc, co[0]) if co else ""
+            except OSError:
+                L, co = "", None
+            B = goc.get(remote, "")
+            if r.get("xoa"):
+                if co and L == B:
+                    _cat_thung_rac(p, local_rel); so["xoa"] += 1
+                    dia_theo_local.pop(remote, None)
+                goc.pop(remote, None)
+                continue
+            if L == r["bam"]:
+                goc[remote] = r["bam"]; so["giong"] += 1
+                continue
+            if co and not moi_ghep and (B == "" or L != B):
+                try:
                     duong = _cat_xung_dot(p, local_rel); so["xung_dot"] += 1
                     nhat_ky("xung_dot", tep=remote, cat_o=duong)
-                elif co and B == "" and not moi_ghep:
-                    duong = _cat_xung_dot(p, local_rel); so["xung_dot"] += 1
-                    nhat_ky("xung_dot", tep=remote, cat_o=duong)
-                noi_dung = giai_ma(khoa, _tai_noi_dung(r["bam"]), b"tep")
-                if dau_tep(khoa, noi_dung) != r["bam"]:
+                except OSError as e:
+                    so["loi"] += 1
+                    nhat_ky("loi_cat_xung_dot", tep=remote, loi=str(e)[:150])
+                    continue
+            can_tai.append((r, remote, local_rel, p))
+        for (r, remote, local_rel, p), kq in _song_song(lambda t: giai_ma(khoa, _tai_noi_dung(t[0]["bam"]), b"tep"), can_tai):
+            try:
+                if isinstance(kq, Exception):
+                    raise kq
+                if dau_tep(khoa, kq) != r["bam"]:
                     raise ValueError("dấu tệp không khớp")
-                _ghi_tep_nao(p, noi_dung)
+                _ghi_tep_nao(p, kq)
                 stt = p.stat()
                 chi_muc[local_rel] = [stt.st_size, stt.st_mtime_ns, r["bam"]]
                 dia_theo_local[remote] = (local_rel, (p, stt.st_size, stt.st_mtime_ns))
@@ -640,10 +666,11 @@ def _dong_bo(chi_keo: bool, bao) -> dict:
             except Exception as e:  # noqa: BLE001 - một tệp lỗi không dừng cả vòng
                 so["loi"] += 1
                 nhat_ky("loi_keo", tep=remote, loi=str(e)[:150])
-            if bao and (so["keo"] % 50 == 0):
+            if bao and so["keo"] % 100 == 0:
                 bao(None, f"Đã nhận {so['keo']} tệp")
         db.update({"seq": seq, "goc": goc, "ten": ten_map})
         _ghi(DONG_BO, db)
+        _ghi(CHI_MUC, chi_muc)
         if len(hang) < 1000:
             break
     if moi_ghep:
@@ -652,10 +679,10 @@ def _dong_bo(chi_keo: bool, bao) -> dict:
         _ghi(CHI_MUC, chi_muc)
         return so
 
-    # ---- ĐẨY
-    da_day = 0
+    # ---- ĐẨY (chọn tệp đổi khác tuần tự, GỬI song song, lưu tiến độ mỗi 200 tệp để khởi động lại giữa chừng không phải gửi lại)
+    can_day = []
     for remote, (local_rel, (p, size, mt)) in list(dia_theo_local.items()):
-        if da_day >= LUOT_TAI_LEN:
+        if len(can_day) >= LUOT_TAI_LEN:
             so["con_lai"] = True
             break
         try:
@@ -663,24 +690,38 @@ def _dong_bo(chi_keo: bool, bao) -> dict:
         except OSError:
             continue
         B = goc.get(remote, "")
-        if L == B:
-            continue
-        try:
-            noi_dung = p.read_bytes()
-            if dau_tep(khoa, noi_dung) != L:
-                continue                                    # tệp đang được ghi dở, để vòng sau
-            _goi("PUT", "/tep?" + urllib.parse.urlencode({"duong_dan": remote, "bam": L, "goc": B}), raw=ma_hoa(khoa, noi_dung, b"tep"), cho=300)
-            goc[remote] = L; so["day"] += 1; da_day += 1
-        except LoiTram as e:
-            if e.ma == 409:
+        if L != B:
+            can_day.append((remote, p, L, B))
+
+    def gui(t):
+        remote, p, L, B = t
+        noi_dung = p.read_bytes()
+        if dau_tep(khoa, noi_dung) != L:
+            return "dang_ghi"                               # tệp đang được ghi dở, để vòng sau
+        _goi("PUT", "/tep?" + urllib.parse.urlencode({"duong_dan": remote, "bam": L, "goc": B}), raw=ma_hoa(khoa, noi_dung, b"tep"), cho=300)
+        return "ok"
+    dung_som = False
+    for n, ((remote, p, L, B), kq) in enumerate(_song_song(gui, can_day, dung=lambda: dung_som), 1):
+        if kq == "ok":
+            goc[remote] = L; so["day"] += 1
+        elif isinstance(kq, LoiTram):
+            if kq.ma == 409:
                 so["xung_dot"] += 1                         # vòng kéo sau sẽ xử lý
             else:
                 so["loi"] += 1
-                nhat_ky("loi_day", tep=remote, loi=str(e)[:150])
-                if e.ma in (0, 401, 501):
-                    break
-        if bao and da_day and da_day % 50 == 0:
-            bao(None, f"Đã gửi {da_day} tệp")
+                nhat_ky("loi_day", tep=remote, loi=str(kq)[:150])
+                if kq.ma in (0, 401, 501):
+                    dung_som = True
+        elif isinstance(kq, Exception):
+            so["loi"] += 1
+        if n % 200 == 0:
+            db.update({"seq": seq, "goc": goc, "ten": ten_map})
+            _ghi(DONG_BO, db)
+            _ghi(CHI_MUC, chi_muc)
+            if bao:
+                bao(None, f"Đã gửi {so['day']} tệp")
+    if dung_som:
+        so["con_lai"] = False
     # tệp đã xóa ở máy này. Chặn xóa hàng loạt: thư mục bộ não tạm vắng (ổ ngoài rút ra, đổi đường dẫn) trông giống "xóa hết".
     mat = [k for k in goc if k not in dia_theo_local and not k.startswith(TIEN_TO_CAU_HINH)]
     if mat and (not dia_theo_local or (len(mat) > 50 and len(mat) > len(goc) * 0.2)):
@@ -705,6 +746,35 @@ def _dong_bo(chi_keo: bool, bao) -> dict:
     _ghi(CHI_MUC, chi_muc)
     _tt["dong_bo"] = {**so, "luc": time.time()}
     return so
+
+
+LUONG_SONG_SONG = 8
+
+
+def _song_song(ham, viec, dung=None):
+    """Chạy ham(x) cho từng x trong `viec` bằng 8 luồng; trả lần lượt (x, kết quả hoặc Exception) theo thứ tự xong.
+    `dung()` True thì không gửi thêm việc mới (việc đang chạy vẫn chạy xong)."""
+    from concurrent.futures import ThreadPoolExecutor, FIRST_COMPLETED, wait
+    viec = list(viec)
+    if not viec:
+        return
+    with ThreadPoolExecutor(max_workers=LUONG_SONG_SONG) as ex:
+        dang, i = {}, 0
+        while i < len(viec) or dang:
+            while i < len(viec) and len(dang) < LUONG_SONG_SONG * 2 and not (dung and dung()):
+                dang[ex.submit(ham, viec[i])] = viec[i]
+                i += 1
+            if not dang:
+                break
+            xong, _ = wait(list(dang), return_when=FIRST_COMPLETED)
+            for f in xong:
+                x = dang.pop(f)
+                try:
+                    yield x, f.result()
+                except Exception as e:  # noqa: BLE001
+                    yield x, e
+            if dung and dung():
+                i = len(viec)
 
 
 def _tai_noi_dung(bam: str) -> bytes:
@@ -917,6 +987,24 @@ def ghep(dong: str, mat_khau: str, ten: str = "") -> dict:
     if not d.get("goi"):
         _dam_bao_duong_ham()
         return {"ok": True, "can_khoi_dong_lai": False, "ghi_chu": "Mã ghép không kèm gói nhân bản: máy này chỉ nhận bộ não qua đồng bộ."}
+    try:
+        return _ghep_nhan_goi(d, mat_khau)
+    except Exception:
+        # Hỏng giữa chừng (mất mạng, hết chỗ trống...): gỡ máy này khỏi Trạm và xóa sổ ghép để anh tạo dòng ghép mới rồi ghép lại được.
+        try:
+            _goi("POST", "/go-may", {"may_id": d["may_id"]})
+        except Exception:  # noqa: BLE001
+            pass
+        for p in (CAU_HINH, VAI_TT):
+            try:
+                p.unlink()
+            except OSError:
+                pass
+        nhat_ky("ghep_hong_da_go")
+        raise
+
+
+def _ghep_nhan_goi(d: dict, mat_khau: str) -> dict:
     tep = cm.VIEC / "nhan-ban.tisapack"
     cm.VIEC.mkdir(parents=True, exist_ok=True)
     _tai_goi_ve(d["goi"], tep, lambda pt, chu: _bao_viec("ghep", 5 + pt * 0.6, chu))
@@ -1001,29 +1089,35 @@ def tat(xac_nhan: bool = False) -> dict:
 
 # ================================================================ luồng nền
 def bat_luong() -> None:
+    """Hai luồng riêng: NHỊP (30 giây, báo Trạm còn sống + nhận vai) và ĐỒNG BỘ (2 phút, lâu cũng không làm trễ nhịp:
+    lần đầu đẩy hàng chục nghìn tệp mà nhịp đứng chờ thì Trạm tưởng máy chủ đã tắt và cổng hiện trang bảo trì)."""
     if _luong["chay"]:
         return
     _luong["chay"] = True
 
-    def vong():
-        lan_dong_bo = 0
+    def vong_nhip():
         while True:
-            if not dang_bat():
-                time.sleep(NHIP_GIAY)
-                continue
-            try:
-                nhip()
-            except Exception as e:  # noqa: BLE001
-                _tt["loi_nhip"] = str(e)[:200]
-            if time.time() - lan_dong_bo > DONG_BO_GIAY and not (_viec.get("v") or {}).get("dang_chay"):
+            if dang_bat():
+                try:
+                    nhip()
+                except Exception as e:  # noqa: BLE001
+                    _tt["loi_nhip"] = str(e)[:200]
+            time.sleep(NHIP_GIAY)
+
+    def vong_dong_bo():
+        time.sleep(20)
+        while True:
+            cho = DONG_BO_GIAY
+            if dang_bat() and not (_viec.get("v") or {}).get("dang_chay"):
                 try:
                     so = dong_bo_nao()
-                    lan_dong_bo = 0 if (so or {}).get("con_lai") else time.time()
+                    if (so or {}).get("con_lai"):
+                        cho = 5
                 except Exception as e:  # noqa: BLE001
                     _tt["dong_bo"] = {"loi": str(e)[:200], "luc": time.time()}
-                    lan_dong_bo = time.time()
-            time.sleep(NHIP_GIAY if lan_dong_bo else 5)
-    threading.Thread(target=vong, name="tisa-nhieu-may", daemon=True).start()
+            time.sleep(cho)
+    threading.Thread(target=vong_nhip, name="tisa-nhieu-may-nhip", daemon=True).start()
+    threading.Thread(target=vong_dong_bo, name="tisa-nhieu-may-dong-bo", daemon=True).start()
 
 
 # ================================================================ giao diện
@@ -1049,7 +1143,6 @@ def _link_token() -> str:
 
 
 def gan(app) -> None:
-    from fastapi import Request
     from fastapi.responses import HTMLResponse, JSONResponse
 
     trang = ROOT / "dashboard" / "tisa-nhieu-may.html"
@@ -1101,8 +1194,10 @@ def gan(app) -> None:
                 nhat_ky("loi_dong_bo_dau", loi=str(e)[:200])
             return {**r, "ten_mien": kq.get("ten_mien")}
         try:
+            import tisa_tram_cf
+            tisa_tram_cf.CF(b.get("token") or "")             # token sai dạng thì báo ngay
             _chay_nen("dung_tram", lam, b.get("token") or "", b.get("ten_mien") or "", b.get("mat_khau"))
-        except ValueError as e:
+        except Exception as e:  # noqa: BLE001 - ValueError, LoiCF
             return _loi(e)
         return {"ok": True}
 
@@ -1136,6 +1231,11 @@ def gan(app) -> None:
             return _loi(f"Anh đang mở trang này qua {t['host']}. Ghép máy phụ sẽ THAY dữ liệu của máy đang trả lời (tên {t['ten_may']}). "
                         "Hãy mở TISA BOT ngay trên máy mới (http://localhost:cổng) rồi làm lại, hoặc tick ô xác nhận nếu chắc chắn.")
         try:
+            if dang_bat():
+                raise ValueError("Máy này đã ghép với Trạm rồi.")
+            tach_dong_ghep(b.get("dong") or "")             # báo dòng ghép sai NGAY, không đợi việc nền
+            if not (b.get("mat_khau") or ""):
+                raise ValueError("Nhập mật khẩu bộ não.")
             _chay_nen("ghep", ghep, b.get("dong") or "", b.get("mat_khau") or "", b.get("ten") or "")
         except ValueError as e:
             return _loi(e)
