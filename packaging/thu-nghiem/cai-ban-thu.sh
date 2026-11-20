@@ -78,7 +78,7 @@ echo "   Đang khởi động..."
 for i in $(seq 1 90); do curl -sf -m 2 -o /dev/null "http://127.0.0.1:${PORT}/health" && break; sleep 2; done
 if curl -sf -m 2 -o /dev/null "http://127.0.0.1:${PORT}/health"; then
   echo "== XONG. Mở: http://127.0.0.1:${PORT}/  (lần đầu tạo tài khoản quản trị), rồi vào menu Nhiều máy."
-  open "http://127.0.0.1:${PORT}/" 2>/dev/null || true
+  [ "${TISA_KHONG_MO:-}" = "1" ] || open "http://127.0.0.1:${PORT}/" 2>/dev/null || true
 else
   echo "Chưa thấy TISA BOT trả lời. Xem nhật ký: ${DIR}/server/tisa.log"
   exit 1

@@ -319,6 +319,9 @@ def ap_vai_khi_khoi_dong() -> dict:
     except Exception as e:  # noqa: BLE001
         nhat_ky("loi_ap_cau_hinh", loi=str(e)[:200])
     giu = set(vt.get("giu") or [])
+    # Máy đang CÁCH LY của Chuyển máy (vừa nhận gói thường, chưa bấm chuyển chính thức): giữ vai nào cũng KHÔNG bật lại kênh, lịch, bảng.
+    # Ví dụ bản sao chạy thử cạnh máy thật trên cùng một máy: làm chủ Trạm được nhưng không được trả lời khách trùng máy thật.
+    cach_ly = cm.dang_cach_ly()
     st = cm._doc_cai_dat()
     doi = False
     # khach: kênh nhận tin + Zalo MCP
@@ -332,7 +335,7 @@ def ap_vai_khi_khoi_dong() -> dict:
         m = cm._doi_trang_thai_mcp(None, False, loc_zalo=True)
         if m:
             da_tat["mcp"] = sorted(set(da_tat.get("mcp") or []) | set(m))
-    else:
+    elif not cach_ly:
         for k in da_tat.get("kenh") or []:
             v = st.get(k)
             if isinstance(v, dict) and v.get("enabled") is False:
@@ -351,7 +354,7 @@ def ap_vai_khi_khoi_dong() -> dict:
         os.environ["TISA_CACH_LY"] = "1"
         for k in cm.BIEN_TAM_DUNG:
             os.environ[k] = "1"
-    else:
+    elif not cach_ly:
         if "lich_truoc" in da_tat:
             st["schedules_off_here"] = bool(da_tat.pop("lich_truoc")); doi = True
         if da_tat.pop("backup", False):
@@ -364,7 +367,7 @@ def ap_vai_khi_khoi_dong() -> dict:
     if "bang" not in giu:
         if cm._tam_tat_dq() or cm._dq_da_tat_san():
             da_tat["dq"] = True
-    elif da_tat.pop("dq", False):
+    elif not cach_ly and da_tat.pop("dq", False):
         cm._bat_lai_dq()
     if doi:
         cm._ghi_cai_dat(st)
@@ -382,8 +385,8 @@ def _dam_bao_duong_ham() -> None:
     rt = st.get("remote_tunnel") if isinstance(st.get("remote_tunnel"), dict) else {}
     if rt.get("enabled") is True:
         return
-    if rt.get("mode") == "token" and rt.get("token") and cau_hinh().get("nhan_ban") and not cau_hinh().get("token_cua_may_nay"):
-        rt.pop("token", None)        # token này là của máy chính (đi theo gói nhân bản), máy phụ không được nối vào đường hầm đó
+    if rt.get("mode") == "token" and rt.get("token") and (cau_hinh().get("nhan_ban") or cm.dang_cach_ly()) and not cau_hinh().get("token_cua_may_nay"):
+        rt.pop("token", None)        # token này là của máy gốc (đi theo gói), máy này không được nối vào đường hầm đó
     rt.update({"enabled": True, "mode": "quick" if rt.get("mode") != "tailscale" else "tailscale"})
     st["remote_tunnel"] = rt
     cm._ghi_cai_dat(st)

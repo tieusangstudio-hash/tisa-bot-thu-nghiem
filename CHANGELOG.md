@@ -6,6 +6,8 @@ Lịch sử phiên bản TISA BOT. Bản mới nhất ở trên cùng. Xem ngay 
 
 Định dạng: mỗi phiên bản là một khối `## [x.y.z] - ngày`, bên dưới nhóm thay đổi theo `### Thêm mới / Sửa lỗi / Cải thiện / Bảo mật`.
 
+## [0.617.2] - 2026-11-21
+
 ## [0.617.1] - 2026-11-20
 ### Sửa lỗi
 - **Thẻ cookie Facebook đọc được trang trở lại.** Khi mở trang bằng cookie trên trang Cookies, TISA BOT giờ gửi kèm các header điều hướng như trình duyệt thật (`Sec-Fetch-*`, `Accept`, `Upgrade-Insecure-Requests`). Trước đó Facebook trả lỗi 400 trước cả khi xét tới cookie, nên thẻ còn sống vẫn báo "lần gần nhất không tải được".

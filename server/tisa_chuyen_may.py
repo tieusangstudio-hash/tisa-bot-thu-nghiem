@@ -254,6 +254,9 @@ def _bo(rel_parts, ten: str) -> bool:
     return ten in BO_TEP or ten.endswith(BO_DUOI)
 
 
+GIU_THU_MUC_GACH = {"_mcp"}
+
+
 # Bộ não là dữ liệu của chủ: chỉ bỏ rác máy, giữ mọi thư mục kể cả .git (sao lưu GitHub của bộ não) và thư mục tên "logs".
 BO_THU_MUC_NAO = {"node_modules", "__pycache__", ".Trash", ".pytest_cache"}
 
@@ -266,7 +269,9 @@ def _duyet(goc: Path, tien_to: str, theo_doi, bo_cap_dau_gach=False, la_nao=Fals
     for dp, dn, fn in os.walk(goc):
         rel_dp = Path(dp).relative_to(goc)
         if bo_cap_dau_gach and rel_dp == Path("."):
-            dn[:] = [d for d in dn if not d.startswith("_")]
+            # Bỏ thư mục dự phòng/rác (_truoc-*, _sao-luu...) nhưng GIỮ _mcp: mã các MCP tự cài (SnapGen, tisa-web...) nằm ở đó,
+            # thiếu nó máy nhận báo "can't open file .../_mcp/<tên>/server.py" (thấy khi nhân bản thử 21/11/2026).
+            dn[:] = [d for d in dn if not d.startswith("_") or d in GIU_THU_MUC_GACH]
         dn[:] = [d for d in dn if d not in bo_tm and not os.path.islink(os.path.join(dp, d))]
         for f in fn:
             p = Path(dp) / f
