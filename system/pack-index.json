@@ -1,0 +1,11 @@
+{
+  "format": "tisa-pack-index",
+  "format_version": 1,
+  "updated": "2026-09-05",
+  "store": {
+    "name": "Kho cài đặt TISA BOT",
+    "url": "https://github.com/tieusangstudio-hash/tisa-store"
+  },
+  "_doc": "ĐÃ ĐÔNG LẠI - kho thật chuyển sang repo riêng https://github.com/tieusangstudio-hash/tisa-store từ 0.55.30. Tệp này ở lại để bản TISA BOT 0.55.24-0.55.29 (vốn trỏ cứng vào đây) vẫn xem và cài được, nên mục bên dưới dùng địa chỉ TUYỆT ĐỐI trỏ sang kho mới. Không thêm gì vào đây nữa; thêm gói mới ở repo kho.",
+  "packs": []
+}

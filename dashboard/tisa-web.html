@@ -1,0 +1,1055 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Quản lý web</title>
+<link rel="stylesheet" href="/tisa-giao-dien.css">
+<style>
+/* Trang Quản lý web (/tisa-web/), mở trong khung TISA BOT (Kết nối > Quản lý web). */
+:root { --nhan: var(--tisa-nhan, #ff6b35); --chinh: var(--tisa-chinh, #172f72); --nen: #f5f7fc; --the: #fff; --chu: #172033; --mo: #5b6478; --vien: #e3e8f3; --nen2: #eef2fb;
+  --xanh: #16a34a; --do: #dc2626; --vang: #d97706; --bong: 0 1px 2px rgba(23,32,51,.05), 0 8px 24px -12px rgba(23,32,51,.18); }
+:root.toi { --nen: #0b1026; --the: #131a3a; --chu: #eef1ff; --mo: #a9b1d6; --vien: #2a3470; --nen2: #1b2450; --bong: 0 10px 30px -14px rgba(0,0,0,.6); }
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--nen); color: var(--chu); font: 14.5px/1.55 "Be Vietnam Pro", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
+button, input, select, textarea { font: inherit; color: inherit; }
+a { color: inherit; }
+.khung { max-width: 1240px; margin: 0 auto; padding: 26px 28px 60px; }
+.dau { display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 14px; margin-bottom: 20px; }
+.dau h1 { margin: 0; font-size: 26px; letter-spacing: -.3px; display: flex; align-items: center; gap: 12px; }
+.dau h1 i { display: inline-grid; place-items: center; width: 40px; height: 40px; border-radius: 12px; font-style: normal; color: #fff;
+  background: linear-gradient(135deg, color-mix(in srgb, var(--nhan) 80%, #fff), var(--nhan)); box-shadow: 0 6px 16px -6px var(--nhan); }
+.dau p { margin: 6px 0 0; color: var(--mo); max-width: 640px; }
+.hang { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; }
+.nut { display: inline-flex; align-items: center; gap: 7px; padding: 9px 15px; border-radius: 11px; border: 1px solid transparent; background: var(--nhan); color: #fff; font-weight: 700; cursor: pointer; white-space: nowrap; transition: transform .12s, box-shadow .15s, background .15s; }
+.nut:hover { box-shadow: 0 6px 16px -8px var(--nhan); transform: translateY(-1px); }
+.nut.phu { background: var(--the); color: var(--chu); border-color: var(--vien); }
+.nut.phu:hover { border-color: var(--nhan); box-shadow: none; }
+.nut.nho { padding: 6px 11px; font-size: 13px; border-radius: 9px; }
+.nut.do { background: transparent; color: var(--do); border-color: color-mix(in srgb, var(--do) 40%, var(--vien)); }
+.nut:disabled { opacity: .55; cursor: default; transform: none; box-shadow: none; }
+.nut svg { width: 16px; height: 16px; }
+/* Ô số liệu */
+.so { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; margin-bottom: 18px; }
+.so div { padding: 16px 18px; border-radius: 16px; background: var(--the); border: 1px solid var(--vien); box-shadow: var(--bong); position: relative; overflow: hidden; }
+.so div::after { content: ""; position: absolute; right: -18px; top: -18px; width: 70px; height: 70px; border-radius: 50%; background: var(--mau, var(--nhan)); opacity: .1; }
+.so b { display: block; font-size: 28px; line-height: 1.1; letter-spacing: -.5px; }
+.so span { color: var(--mo); font-size: 13px; }
+.bao { display: flex; gap: 12px; align-items: flex-start; padding: 13px 16px; border-radius: 14px; margin-bottom: 16px; background: color-mix(in srgb, var(--vang) 10%, var(--the)); border: 1px solid color-mix(in srgb, var(--vang) 35%, var(--vien)); font-size: 13.5px; }
+.bao b { color: var(--vang); }
+/* Bộ lọc */
+.loc { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-bottom: 16px; }
+.loc button { padding: 7px 13px; border-radius: 999px; border: 1px solid var(--vien); background: var(--the); cursor: pointer; font-weight: 600; font-size: 13px; color: var(--mo); }
+.loc button.on { background: var(--chu); color: var(--the); border-color: var(--chu); }
+.loc input { margin-left: auto; min-width: 220px; padding: 8px 14px; border-radius: 999px; border: 1px solid var(--vien); background: var(--the); outline: none; }
+.loc input:focus { border-color: var(--nhan); }
+/* Thẻ web */
+.luoi { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 18px; }
+.the { display: flex; flex-direction: column; border-radius: 18px; background: var(--the); border: 1px solid var(--vien); box-shadow: var(--bong); overflow: hidden; transition: transform .15s, border-color .15s; }
+.the:hover { transform: translateY(-2px); border-color: color-mix(in srgb, var(--nhan) 45%, var(--vien)); }
+.xem { position: relative; height: 150px; background: linear-gradient(135deg, var(--chinh), color-mix(in srgb, var(--nhan) 70%, var(--chinh))); background-size: cover; background-position: top center; cursor: pointer; }
+.xem .chu-dau { position: absolute; inset: 0; display: grid; place-items: center; font-size: 46px; font-weight: 800; color: rgba(255,255,255,.9); letter-spacing: -1px; }
+.xem.co-anh .chu-dau { display: none; }
+.xem::after { content: ""; position: absolute; inset: 0; background: linear-gradient(180deg, rgba(0,0,0,.25), transparent 45%); }
+.tt { position: absolute; z-index: 1; top: 10px; left: 10px; display: inline-flex; align-items: center; gap: 6px; padding: 4px 10px; border-radius: 999px; font-size: 12px; font-weight: 700; background: rgba(255,255,255,.92); color: #334; backdrop-filter: blur(6px); }
+.tt i { width: 8px; height: 8px; border-radius: 50%; background: #9aa3b8; }
+.tt.tot i { background: var(--xanh); box-shadow: 0 0 0 3px color-mix(in srgb, var(--xanh) 25%, transparent); }
+.tt.loi i { background: var(--do); box-shadow: 0 0 0 3px color-mix(in srgb, var(--do) 25%, transparent); }
+.tt.cham i { background: var(--vang); }
+.nt { position: absolute; z-index: 1; top: 10px; right: 10px; padding: 4px 9px; border-radius: 8px; font-size: 11.5px; font-weight: 800; letter-spacing: .3px; color: #fff; background: rgba(15,18,40,.65); backdrop-filter: blur(6px); }
+.than { padding: 14px 16px 12px; display: flex; flex-direction: column; gap: 8px; flex: 1; min-width: 0; }
+.links { min-width: 0; }
+.than h3 { margin: 0; font-size: 16.5px; line-height: 1.3; }
+.links { display: flex; flex-wrap: wrap; gap: 6px; }
+.lk { display: inline-flex; align-items: center; gap: 5px; max-width: 100%; padding: 3px 9px; border-radius: 8px; background: var(--nen2); font-size: 12.5px; text-decoration: none; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.lk.mien { background: color-mix(in srgb, var(--nhan) 12%, var(--the)); color: color-mix(in srgb, var(--nhan) 75%, var(--chu)); font-weight: 700; }
+.chi { display: flex; flex-wrap: wrap; gap: 12px; font-size: 12.5px; color: var(--mo); }
+.chi span { display: inline-flex; align-items: center; gap: 4px; }
+.chi .xau { color: var(--do); font-weight: 700; }
+.vach { display: flex; align-items: flex-end; gap: 3px; height: 22px; }
+.vach i { flex: 1; max-width: 10px; border-radius: 2px; background: var(--xanh); opacity: .8; }
+.vach i.l { background: var(--do); }
+.vach i.r { background: var(--vien); height: 30% !important; }
+.chan-the { display: flex; gap: 8px; padding: 12px 16px; border-top: 1px solid var(--vien); }
+.chan-the .nut { flex: 1; justify-content: center; }
+.trong { padding: 50px 20px; text-align: center; color: var(--mo); border: 2px dashed var(--vien); border-radius: 18px; background: var(--the); }
+.trong h3 { color: var(--chu); margin: 0 0 6px; font-size: 18px; }
+/* Ngăn chi tiết */
+.man { position: fixed; inset: 0; z-index: 20; background: rgba(10,14,35,.42); opacity: 0; pointer-events: none; transition: opacity .2s; }
+.man.mo { opacity: 1; pointer-events: auto; }
+.ngan { position: fixed; z-index: 21; top: 0; right: 0; bottom: 0; width: min(600px, 100vw); background: var(--the); box-shadow: -20px 0 50px -20px rgba(0,0,0,.4); transform: translateX(105%); transition: transform .25s ease; display: flex; flex-direction: column; }
+.ngan.mo { transform: none; }
+.ngan-dau { padding: 18px 22px 0; border-bottom: 1px solid var(--vien); }
+.ngan-dau .hang { justify-content: space-between; flex-wrap: nowrap; }
+.ngan-dau h2 { margin: 0; font-size: 20px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.dong { border: 0; background: var(--nen2); width: 34px; height: 34px; border-radius: 10px; cursor: pointer; font-size: 18px; flex: none; }
+.tab { display: flex; gap: 4px; margin-top: 14px; overflow-x: auto; }
+.tab button { padding: 10px 14px; border: 0; background: none; cursor: pointer; font-weight: 700; color: var(--mo); border-bottom: 2.5px solid transparent; white-space: nowrap; }
+.tab button.on { color: var(--nhan); border-bottom-color: var(--nhan); }
+.ngan-than { flex: 1; overflow-y: auto; padding: 20px 22px 30px; }
+.o { margin-bottom: 14px; }
+.o label { display: block; font-weight: 700; font-size: 13px; margin-bottom: 5px; }
+.o small { display: block; color: var(--mo); font-size: 12px; margin-top: 4px; }
+input[type=text], input[type=url], select, textarea { width: 100%; padding: 10px 12px; border: 1px solid var(--vien); border-radius: 11px; background: var(--nen); outline: none; }
+input:focus, select:focus, textarea:focus { border-color: var(--nhan); }
+textarea { min-height: 90px; resize: vertical; }
+.hai { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.khoi { padding: 16px; border: 1px solid var(--vien); border-radius: 14px; background: var(--nen); margin-bottom: 14px; }
+.khoi h4 { margin: 0 0 4px; font-size: 15px; display: flex; align-items: center; gap: 8px; }
+.khoi p { margin: 0 0 10px; color: var(--mo); font-size: 13px; }
+.kq { width: 100%; border-collapse: collapse; font-size: 13px; }
+.kq td { padding: 7px 0; border-bottom: 1px solid var(--vien); vertical-align: top; }
+.kq td:first-child { color: var(--mo); width: 38%; }
+.ma { font: 12.5px/1.5 ui-monospace, Menlo, Consolas, monospace; padding: 10px 12px; border-radius: 10px; background: #12173a; color: #e6e9ff; white-space: pre-wrap; word-break: break-all; position: relative; }
+.chep { position: absolute; top: 6px; right: 6px; padding: 3px 9px; border-radius: 7px; border: 0; background: rgba(255,255,255,.14); color: #fff; cursor: pointer; font-size: 12px; }
+.viec { display: grid; gap: 12px; }
+.viec .khoi { margin: 0; }
+.bang-khach { width: 100%; border-collapse: collapse; font-size: 12.5px; }
+.bang-khach th { text-align: left; color: var(--mo); font-size: 12px; font-weight: 700; padding: 6px 8px; border-bottom: 1px solid var(--vien); }
+.bang-khach td { padding: 8px; border-bottom: 1px solid var(--vien); vertical-align: top; }
+.pill { display: inline-block; padding: 2px 9px; border-radius: 999px; font-size: 12px; font-weight: 700; }
+.pill.tot { background: color-mix(in srgb, var(--xanh) 14%, transparent); color: var(--xanh); }
+.pill.loi { background: color-mix(in srgb, var(--do) 14%, transparent); color: var(--do); }
+.pill.cho { background: var(--nen2); color: var(--mo); }
+dialog { border: 0; border-radius: 18px; padding: 0; width: min(640px, 94vw); max-height: 86vh; background: var(--the); color: var(--chu); box-shadow: 0 30px 80px -20px rgba(0,0,0,.5); }
+dialog::backdrop { background: rgba(10,14,35,.45); }
+.hop-dau { padding: 18px 22px; border-bottom: 1px solid var(--vien); display: flex; justify-content: space-between; align-items: center; }
+.hop-dau h3 { margin: 0; }
+.hop-than { padding: 16px 22px; overflow-y: auto; max-height: 58vh; }
+.hop-chan { padding: 14px 22px; border-top: 1px solid var(--vien); display: flex; justify-content: flex-end; gap: 10px; }
+.uv { display: flex; gap: 12px; align-items: flex-start; padding: 12px; border: 1px solid var(--vien); border-radius: 12px; margin-bottom: 8px; cursor: pointer; }
+.uv:has(input:checked) { border-color: var(--nhan); background: color-mix(in srgb, var(--nhan) 7%, var(--the)); }
+.uv input { margin-top: 4px; accent-color: var(--nhan); }
+.uv small { display: block; color: var(--mo); font-size: 12px; word-break: break-all; }
+.toast { position: fixed; left: 50%; bottom: 26px; transform: translateX(-50%) translateY(20px); opacity: 0; z-index: 40; padding: 11px 18px; border-radius: 12px; background: #141a3a; color: #fff; font-weight: 600; transition: all .25s; pointer-events: none; max-width: 90vw; }
+.toast.hien { opacity: 1; transform: translateX(-50%); }
+.xoay { width: 14px; height: 14px; border: 2px solid currentColor; border-right-color: transparent; border-radius: 50%; animation: xoay .7s linear infinite; display: inline-block; }
+@keyframes xoay { to { transform: rotate(360deg); } }
+/* ---------- Web mẫu có sẵn: Web CRM + Lead Page/Sale Page (tisa_web_mau.py) ---------- */
+.mau-dau { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px; margin: 4px 0 12px; }
+.mau-dau h2 { margin: 0; font-size: 18px; display: flex; align-items: center; gap: 10px; }
+.mau-dau h2 small { font-size: 12.5px; font-weight: 600; color: var(--mo); }
+.mau-tt { display: flex; flex-wrap: wrap; gap: 8px; font-size: 12.5px; }
+.mau-tt span { display: inline-flex; align-items: center; gap: 6px; padding: 4px 10px; border-radius: 999px; background: var(--the); border: 1px solid var(--vien); color: var(--mo); font-weight: 600; }
+.mau-tt span.ok { color: var(--xanh); border-color: color-mix(in srgb, var(--xanh) 35%, var(--vien)); }
+.mau-tt span.thieu { color: var(--do); border-color: color-mix(in srgb, var(--do) 35%, var(--vien)); }
+.luoi.mau { margin-bottom: 28px; }
+.the.mau .xem { height: 118px; cursor: default; }
+.the.mau.crm .xem { background: linear-gradient(135deg, #2a1f6e, #6d45cb 60%, #9b6bff); }
+.the.mau.lead .xem { background: linear-gradient(135deg, #ff6b35, #ff9857 55%, #ffc27a); }
+.xem .bieu { position: absolute; inset: 0; display: grid; place-items: center; }
+.xem .bieu svg { width: 46px; height: 46px; color: rgba(255,255,255,.95); filter: drop-shadow(0 6px 14px rgba(0,0,0,.25)); }
+.nhan-mau { position: absolute; z-index: 1; top: 10px; right: 10px; padding: 4px 9px; border-radius: 8px; font-size: 11.5px; font-weight: 800; color: #fff; background: rgba(15,18,40,.45); backdrop-filter: blur(6px); }
+.the.mau .mota { margin: 0; color: var(--mo); font-size: 13px; }
+.the.mau .noi { display: inline-flex; align-items: center; gap: 6px; font-size: 12.5px; font-weight: 700; padding: 3px 9px; border-radius: 8px; }
+.the.mau .noi.co { background: color-mix(in srgb, var(--xanh) 12%, var(--the)); color: var(--xanh); }
+.the.mau .noi.chua { background: var(--nen2); color: var(--mo); }
+.the.mau .seo { display: flex; gap: 10px; align-items: flex-start; padding: 8px 10px; border: 1px solid var(--vien); border-radius: 12px; background: var(--nen); min-width: 0; }
+.the.mau .seo img { flex: none; width: 76px; height: 48px; object-fit: cover; border-radius: 8px; background: var(--nen2); border: 1px solid var(--vien); }
+.the.mau .seo .seo-ch { min-width: 0; flex: 1; display: grid; gap: 1px; }
+.the.mau .seo b { font-size: 13px; line-height: 1.35; overflow: hidden; text-overflow: ellipsis; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
+.the.mau .seo small { color: var(--mo); font-size: 12px; line-height: 1.4; overflow: hidden; text-overflow: ellipsis; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
+.the.mau .seo .seo-tt { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; color: var(--mo); font-size: 11.5px; }
+.the.mau .seo .seo-tt button { border: 0; background: none; cursor: pointer; color: var(--nhan); font-weight: 700; padding: 0; font-size: 11.5px; }
+.the.mau .seo.loi { border-color: color-mix(in srgb, var(--vang) 45%, var(--vien)); background: color-mix(in srgb, var(--vang) 8%, var(--the)); }
+.the.mau .nhan-rieng { align-self: center; white-space: nowrap; }
+.the.mau .lk.rieng { background: color-mix(in srgb, var(--xanh) 12%, var(--the)); color: var(--xanh); font-weight: 700; }
+.the.mau .nhan-rieng { font-size: 11px; font-weight: 800; letter-spacing: .02em; padding: 1px 7px; border-radius: 999px; background: color-mix(in srgb, var(--xanh) 16%, var(--the)); color: var(--xanh); }
+#hopDN, #hopWeb { width: min(480px, 94vw); }
+#hopDN .o small.canh, #hopWeb .o small.canh { color: var(--vang); }
+#hopDN .mk-dong { display: flex; gap: 8px; }
+#hopDN .mk-dong input { flex: 1; }
+#hopDN .loi, #hopWeb .loi { color: var(--do); font-size: 13px; min-height: 18px; margin: 0; }
+.the.mau .chan-the { flex-wrap: wrap; }
+.the.mau .chan-the .nut { flex: 1 1 calc(50% - 4px); }
+.tt.chay i { background: var(--vang); animation: nhay 1s ease-in-out infinite; }
+@keyframes nhay { 50% { opacity: .3; } }
+.viec-mau { display: grid; gap: 10px; }
+.viec-mau button { display: flex; align-items: flex-start; gap: 12px; width: 100%; padding: 13px 14px; border: 1px solid var(--vien); border-radius: 14px; background: var(--the); text-align: left; cursor: pointer; transition: border-color .15s, background .15s; }
+.viec-mau button:hover { border-color: var(--nhan); background: color-mix(in srgb, var(--nhan) 5%, var(--the)); }
+.viec-mau button i { flex: none; display: grid; place-items: center; width: 36px; height: 36px; border-radius: 11px; font-style: normal; font-size: 18px; background: color-mix(in srgb, var(--m, var(--nhan)) 14%, var(--the)); }
+.viec-mau button b { display: block; font-size: 14px; }
+.viec-mau button small { display: block; color: var(--mo); font-size: 12.5px; margin-top: 2px; }
+.tu-dong { padding: 14px; border-radius: 14px; border: 1px solid color-mix(in srgb, var(--xanh) 30%, var(--vien)); background: color-mix(in srgb, var(--xanh) 5%, var(--the)); margin-bottom: 14px; }
+.tu-dong h4 { margin: 0 0 8px; font-size: 15px; }
+.cong-tac { display: flex; align-items: flex-start; gap: 10px; padding: 8px 0; cursor: pointer; }
+.cong-tac input { appearance: none; flex: none; width: 38px; height: 22px; border-radius: 999px; background: var(--vien); position: relative; cursor: pointer; transition: background .15s; margin-top: 1px; }
+.cong-tac input::after { content: ""; position: absolute; top: 3px; left: 3px; width: 16px; height: 16px; border-radius: 50%; background: #fff; transition: left .15s; box-shadow: 0 1px 3px rgba(0,0,0,.25); }
+.cong-tac input:checked { background: var(--xanh); }
+.cong-tac input:checked::after { left: 19px; }
+.cong-tac b { display: block; font-size: 13.5px; }
+.cong-tac small { display: block; color: var(--mo); font-size: 12px; }
+.cong-tac small b { display: inline; font-size: inherit; }
+.nk-dong { display: flex; justify-content: space-between; gap: 8px; padding: 6px 0; border-top: 1px dashed var(--vien); font-size: 12.5px; }
+.nk-dong span:last-child { color: var(--mo); white-space: nowrap; }
+.duong { display: flex; align-items: center; gap: 8px; padding: 9px 11px; border-radius: 10px; background: var(--nen); border: 1px solid var(--vien); font: 12.5px ui-monospace, Menlo, Consolas, monospace; word-break: break-all; }
+.duong button { margin-left: auto; flex: none; }
+
+/* ---- Đưa Web CRM lên Cloudflare ---- */
+#hopCf { width: min(760px, 95vw); }
+#hopCf .hop-than { max-height: 70vh; }
+.cf-gt { margin: 0 0 12px; color: var(--mo); font-size: 13.5px; line-height: 1.6; }
+.cf-chuan { display: flex; flex-wrap: wrap; gap: 6px; margin: 0 0 6px; }
+.cf-chuan span { padding: 4px 10px; border-radius: 999px; font-size: 12.5px; font-weight: 700; background: var(--nen2); color: var(--mo); }
+.cf-chuan span.ok { background: color-mix(in srgb, var(--xanh) 12%, var(--the)); color: var(--xanh); }
+.cf-chuan span.can { background: color-mix(in srgb, var(--vang) 14%, var(--the)); color: var(--vang); }
+.cf-canh { margin: 10px 0 0; padding: 10px 12px; border-radius: 12px; font-size: 13px; line-height: 1.55; background: color-mix(in srgb, var(--vang) 12%, var(--the)); border: 1px solid color-mix(in srgb, var(--vang) 40%, var(--vien)); }
+.cf-cach { border: 1px solid var(--vien); border-radius: 16px; padding: 14px 16px; margin-top: 12px; background: var(--the); }
+.cf-cach.goiy { border-color: color-mix(in srgb, var(--xanh) 55%, var(--vien)); background: color-mix(in srgb, var(--xanh) 5%, var(--the)); }
+.cf-dau { display: flex; flex-wrap: wrap; align-items: center; gap: 9px; margin-bottom: 6px; }
+.cf-dau b { font-size: 15.5px; }
+.cf-so { flex: none; width: 26px; height: 26px; border-radius: 50%; display: grid; place-items: center; font-weight: 800; font-size: 13px; color: #fff; background: var(--chinh); }
+.cf-nhan { padding: 2px 10px; border-radius: 999px; font-size: 12px; font-weight: 700; background: var(--nen2); color: var(--mo); }
+.cf-nhan.ok { background: color-mix(in srgb, var(--xanh) 14%, var(--the)); color: var(--xanh); }
+.cf-nhan.can { background: color-mix(in srgb, var(--vang) 16%, var(--the)); color: var(--vang); }
+.cf-mo { margin: 0 0 8px; font-size: 13.5px; line-height: 1.6; color: var(--chu); }
+.cf-nut { width: 100%; justify-content: center; padding: 12px 14px; font-size: 14.5px; margin-top: 6px; }
+.cf-hang { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px; }
+.cf-hang .nut { flex: 1 1 auto; justify-content: center; }
+.cf-cach details { margin-top: 10px; border-top: 1px dashed var(--vien); padding-top: 8px; }
+.cf-cach summary { cursor: pointer; font-weight: 700; font-size: 13.5px; padding: 4px 0; }
+.cf-buoc { margin: 10px 0 0; padding: 0; list-style: none; counter-reset: cf; }
+.cf-buoc > li { counter-increment: cf; position: relative; padding: 0 0 12px 36px; font-size: 13.5px; line-height: 1.6; }
+.cf-buoc > li::before { content: counter(cf); position: absolute; left: 0; top: 0; width: 24px; height: 24px; border-radius: 50%; display: grid; place-items: center; font-size: 12.5px; font-weight: 800; background: var(--nen2); color: var(--chu); }
+.cf-buoc > li b { display: block; }
+.cf-buoc .duong { margin-top: 6px; }
+.cf-ghi { margin: 8px 0 0; font-size: 12.5px; color: var(--mo); line-height: 1.55; }
+.the.mau .chan-the .nut.cf-nut-the { flex: 1 1 calc(50% - 4px); background: color-mix(in srgb, var(--nhan) 10%, var(--the)); color: color-mix(in srgb, var(--nhan) 80%, var(--chu)); border-color: color-mix(in srgb, var(--nhan) 40%, var(--vien)); }
+.the.mau .chan-the .nut.cf-nut-the.cf-tu-dong { background: var(--nhan); border-color: var(--nhan); color: #fff; }
+.the.mau .chan-the .nut.cf-nut-the.cf-tu-dong:hover { filter: brightness(.95); }
+.the.mau .chan-the .nut.cf-nut-the:hover { background: color-mix(in srgb, var(--nhan) 18%, var(--the)); }
+@media (max-width: 760px) {
+  .the.mau .chan-the .nut { flex: 1 1 calc(50% - 4px); min-height: 40px; }
+  .mau-dau h2 { flex-direction: column; align-items: flex-start; gap: 2px; }
+  .dau .hang { display: grid; grid-template-columns: 1fr 1fr; }
+  .dau .hang .nut { justify-content: center; min-height: 42px; }
+  #nutThem { grid-column: 1 / -1; }
+  .chan-the .nut { min-height: 40px; }
+}
+@media (max-width: 760px) {
+  .khung { padding: 18px 14px 50px; }
+  .so { grid-template-columns: 1fr 1fr; }
+  .loc input { margin-left: 0; width: 100%; }
+  .hai { grid-template-columns: 1fr; }
+  .dau .hang { width: 100%; }
+}
+/* (V3.08) Điện thoại: nút và chip lọc đủ lớn cho ngón tay, ô nhập 16px. */
+@media (max-width: 640px) {
+  .nut, .lk, button, select, summary { min-height: 44px; }
+  .the.mau .chan-the .nut { min-height: 46px; }
+  input:not([type=checkbox]):not([type=radio]), textarea, select { font-size: 16px; }
+  input[type=checkbox], input[type=radio] { width: 22px; height: 22px; }
+  dialog { max-width: calc(100vw - 16px); width: calc(100vw - 16px); max-height: calc(100dvh - 16px); }
+}
+</style>
+</head>
+<body>
+<div class="khung">
+  <div class="dau">
+    <div>
+      <h1><i><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a14 14 0 0 1 0 18M12 3a14 14 0 0 0 0 18"/></svg></i>Quản lý web</h1>
+      <p>Mọi trang web làm từ TISA BOT và đã đưa lên mạng: kiểm tra kết nối, tên miền, lấy nội dung về bộ não để tư vấn, nhận khách để lại thông tin, nhờ AI sửa.</p>
+    </div>
+    <div class="hang">
+      <button class="nut phu" id="nutTim">🔍 Tìm web đã tạo</button>
+      <button class="nut phu" id="nutKtTat">↻ Kiểm tra tất cả</button>
+      <button class="nut" id="nutThem">+ Thêm web</button>
+    </div>
+  </div>
+
+  <section id="mauKhoi" hidden>
+    <div class="mau-dau">
+      <h2>Web mẫu có sẵn <small>Nối sẵn với TISA BOT: chatbot ghi khách vào CRM, lấy số điện thoại để kết bạn Zalo và nhắn chăm sóc</small></h2>
+      <div class="mau-tt" id="mauTt"></div>
+    </div>
+    <div class="luoi mau" id="mauLuoi"></div>
+  </section>
+
+  <div class="so">
+    <div style="--mau:var(--chinh)"><b id="soTong">0</b><span>web đang quản lý</span></div>
+    <div style="--mau:var(--xanh)"><b id="soTot">0</b><span>đang chạy tốt</span></div>
+    <div style="--mau:var(--do)"><b id="soLoi">0</b><span>cần xem lại</span></div>
+    <div style="--mau:var(--nhan)"><b id="soKhach">0</b><span>khách để lại thông tin</span></div>
+  </div>
+  <div class="bao" id="baoCk" hidden><span>⚠️</span><div><b>Chưa có địa chỉ công khai.</b> Form trên web cần gửi khách về TISA BOT qua tên miền. Bật <b>Hệ thống → Cài đặt → Truy cập từ xa</b> rồi mở lại trang này.</div></div>
+
+  <div class="loc" id="loc">
+    <button class="on" data-l="">Tất cả</button><button data-l="tot">Đang chạy</button><button data-l="loi">Cần xem lại</button><button data-l="chua">Chưa kiểm tra</button>
+    <input type="search" id="timKiem" placeholder="Tìm theo tên, link, tên miền…">
+  </div>
+  <div class="luoi" id="luoi"></div>
+</div>
+
+<div class="man" id="man"></div>
+<aside class="ngan" id="ngan" aria-hidden="true">
+  <div class="ngan-dau">
+    <div class="hang"><h2 id="nTen">Web</h2><button class="dong" id="nDong" aria-label="Đóng">×</button></div>
+    <div class="tab" id="nTab">
+      <button data-t="tong" class="on">Tổng quan</button><button data-t="ket-noi">Kết nối</button><button data-t="du-lieu">Dữ liệu tư vấn</button><button data-t="khach">Khách để lại</button><button data-t="sua">Sửa web</button>
+    </div>
+  </div>
+  <div class="ngan-than" id="nThan"></div>
+</aside>
+
+<dialog id="hopTim">
+  <div class="hop-dau"><h3>Web đã tạo trong bộ não</h3><button class="dong" onclick="this.closest('dialog').close()">×</button></div>
+  <div class="hop-than" id="dsTim"></div>
+  <div class="hop-chan"><button class="nut phu" onclick="this.closest('dialog').close()">Đóng</button><button class="nut" id="nutThemTim">Thêm các web đã chọn</button></div>
+</dialog>
+<dialog id="hopMau">
+  <div class="hop-dau"><h3 id="hmTen">Web mẫu</h3><button class="dong" onclick="this.closest('dialog').close()">×</button></div>
+  <div class="hop-than" id="hmThan"></div>
+</dialog>
+<dialog id="hopCf">
+  <div class="hop-dau"><h3 id="cfTieu">☁ Đưa Web CRM lên Cloudflare</h3><button class="dong" onclick="this.closest('dialog').close()">×</button></div>
+  <div class="hop-than" id="cfThan"></div>
+</dialog>
+<dialog id="hopDN">
+  <div class="hop-dau"><h3>🔑 Đổi thông tin đăng nhập Web CRM</h3><button class="dong" onclick="this.closest('dialog').close()">×</button></div>
+  <div class="hop-than">
+    <p style="margin:0 0 12px;color:var(--mo);font-size:13px">Quên mật khẩu hoặc muốn đổi tài khoản quản trị (admin)? Đặt lại ở đây, không cần mật khẩu cũ. Đăng nhập bằng <b>email</b> và mật khẩu mới. Mọi máy đang đăng nhập CRM này sẽ bị đăng xuất.</p>
+    <div class="o"><label for="dnEmail">Email đăng nhập</label><input type="text" id="dnEmail" autocomplete="off" spellcheck="false" maxlength="120" placeholder="ten@gmail.com"></div>
+    <div class="o"><label for="dnTen">Tên hiển thị</label><input type="text" id="dnTen" autocomplete="off" maxlength="60" placeholder="Nguyễn Văn A"></div>
+    <div class="o"><label for="dnMk">Mật khẩu mới</label><div class="mk-dong"><input type="password" id="dnMk" autocomplete="new-password" maxlength="100" placeholder="Từ 8 ký tự, nên có cả chữ và số"><button type="button" class="nut phu nho" id="dnHien">Hiện</button></div></div>
+    <div class="o"><label for="dnMk2">Nhập lại mật khẩu mới</label><input type="password" id="dnMk2" autocomplete="new-password" maxlength="100"><small class="canh" id="dnCanh"></small></div>
+    <p class="loi" id="dnLoi" role="alert"></p>
+  </div>
+  <div class="hop-chan"><button class="nut phu" onclick="this.closest('dialog').close()">Huỷ</button><button class="nut" id="dnOk">Đổi thông tin đăng nhập</button></div>
+</dialog>
+<dialog id="hopWeb">
+  <div class="hop-dau"><h3 id="hwTieu">🌐 Đặt tên miền và tên web</h3><button class="dong" onclick="this.closest('dialog').close()">×</button></div>
+  <div class="hop-than">
+    <p style="margin:0 0 12px;color:var(--mo);font-size:13px">Thẻ chỉ hiện đúng tên miền đang chạy thật. Thường Quản Trị WEB tự cập nhật khi gắn tên miền; chỗ này để anh tự đặt hoặc sửa. Để trống tên miền để quay về địa chỉ mặc định.</p>
+    <div class="o"><label for="hwMien">Tên miền hoặc link web đang chạy</label><input type="text" id="hwMien" autocomplete="off" spellcheck="false" placeholder="nhadep3t.vn hoặc https://nhadep3t.vn"><small>Ví dụ: nhadep3t.vn</small></div>
+    <div class="o"><label for="hwTen">Tên web (hiện trên thẻ)</label><input type="text" id="hwTen" autocomplete="off" maxlength="80"></div>
+    <p class="loi" id="hwLoi" role="alert"></p>
+  </div>
+  <div class="hop-chan"><button class="nut phu" onclick="this.closest('dialog').close()">Huỷ</button><button class="nut" id="hwOk">Lưu</button></div>
+</dialog>
+<dialog id="hopHoi" style="width:min(440px,94vw)">
+  <div class="hop-dau"><h3 id="hhTieu">Nhân bản</h3><button class="dong" onclick="this.closest('dialog').close()">×</button></div>
+  <div class="hop-than"><div class="o"><label id="hhNhan">Tên</label><input type="text" id="hhO" maxlength="60"><small id="hhGoiY"></small></div></div>
+  <div class="hop-chan"><button class="nut phu" onclick="this.closest('dialog').close()">Huỷ</button><button class="nut" id="hhOk">Đồng ý</button></div>
+</dialog>
+<div class="toast" id="toast"></div>
+
+<script>
+(function () {
+  "use strict";
+  var $ = function (id) { return document.getElementById(id); };
+  var DS = [], CK = "", LOC = "", dangMo = null, tabMo = "tong";
+  function esc(s) { return String(s == null ? "" : s).replace(/[&<>"']/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]; }); }
+  function bao(t) { var e = $("toast"); e.textContent = t; e.classList.add("hien"); clearTimeout(bao._t); bao._t = setTimeout(function () { e.classList.remove("hien"); }, 2600); }
+  (function () {
+    var cha = null;
+    try { if (window.parent !== window) cha = window.parent.document.documentElement; } catch (e) {}
+    function theo() { document.documentElement.classList.toggle("toi", cha ? cha.getAttribute("data-theme") !== "light" : matchMedia("(prefers-color-scheme: dark)").matches); }
+    theo(); if (cha) new MutationObserver(theo).observe(cha, { attributes: true, attributeFilter: ["data-theme"] });
+  })();
+  async function goi(url, body) {
+    var r = await fetch(url, body === undefined ? { credentials: "same-origin" } :
+      { method: "POST", credentials: "same-origin", headers: { "content-type": "application/json" }, body: JSON.stringify(body) });
+    var j = await r.json().catch(function () { return {}; });
+    if (!r.ok || j.ok === false) throw new Error(j.error || ("Lỗi " + r.status));
+    return j;
+  }
+  function luc(iso) {
+    if (!iso) return "";
+    var s = (Date.now() - new Date(iso).getTime()) / 1000;
+    if (s < 60) return "vừa xong"; if (s < 3600) return Math.floor(s / 60) + " phút trước";
+    if (s < 86400) return Math.floor(s / 3600) + " giờ trước"; return Math.floor(s / 86400) + " ngày trước";
+  }
+  function tg(ms) { return ms == null ? "" : ms < 1000 ? ms + " ms" : (ms / 1000).toFixed(1).replace(".", ",") + " giây"; }
+  var TEN_COT = { ho_ten: "Họ tên", name: "Họ tên", ten: "Tên", so_dien_thoai: "Số điện thoại", sdt: "Số điện thoại", phone: "Số điện thoại", email: "Email", khoa_hoc: "Khoá học", ghi_chu: "Ghi chú", message: "Lời nhắn", loi_nhan: "Lời nhắn", dia_chi: "Địa chỉ" };
+  function tenCot(k) { return TEN_COT[k] || (k.charAt(0).toUpperCase() + k.slice(1)).replace(/_/g, " "); }
+  function host(u) { try { return new URL(u).host; } catch (e) { return u || ""; } }
+  function trangThai(w) {
+    var k = w.kiem_tra;
+    if (!k) return { lop: "", chu: "Chưa kiểm tra", nhom: "chua" };
+    if (!k.ok) return { lop: "loi", chu: "Lỗi kết nối", nhom: "loi" };
+    var ssl = k.muc.map(function (m) { return m.ssl_ngay; }).filter(function (x) { return x != null; });
+    if (ssl.length && Math.min.apply(null, ssl) < 15) return { lop: "cham", chu: "Sắp hết hạn https", nhom: "loi" };
+    var ms = k.muc.map(function (m) { return m.ms || 0; });
+    if (Math.max.apply(null, ms) > 3000) return { lop: "cham", chu: "Chạy chậm", nhom: "loi" };
+    return { lop: "tot", chu: "Đang chạy", nhom: "tot" };
+  }
+  function anhCua(w) { var m = ((w.kiem_tra || {}).muc || []).find(function (x) { return x.anh; }); return m ? m.anh : ""; }
+  /* V3.34 (chủ 19/11/2026): mọi việc hỗ trợ trên trang này giao cho cộng sự Quản Trị WEB (kỹ năng dq-quan-tri-web), không dùng Hỏi nhanh chung. */
+  function giaoWeb(text, tieu) {
+    text = "Dùng kỹ năng dq-quan-tri-web (cộng sự Quản Trị WEB), đọc SKILL.md và sổ tay trong đó trước khi làm. " + text;
+    try { if (window.parent === window) throw 0; window.parent.postMessage({ tisa: "nho-tisabot", agent: "tisa-quan-tri-web", text: text, tieu_de: tieu || "Quản Trị WEB" }, location.origin); bao("Đã giao cho Quản Trị WEB, xem tiến độ ở khung chat."); }
+    catch (e) { try { navigator.clipboard.writeText(text); } catch (x) {} bao("Đã chép yêu cầu, dán vào ô chat TISA BOT."); }
+  }
+  function noiWeb(w) { return "trang web \"" + w.ten + "\"" + (w.thu_muc ? " (mã nguồn ở thư mục `" + w.thu_muc + "` trong bộ não)" : "") + (w.ten_mien || w.link ? ", đang chạy tại " + (w.ten_mien || w.link) : ""); }
+
+  async function nap() {
+    var j = await goi("/tisa-web/api/ds");
+    DS = j.ds || []; CK = j.cong_khai || "";
+    $("baoCk").hidden = !!CK || !DS.length;
+    ve();
+    if (dangMo) { var w = DS.find(function (x) { return x.id === dangMo; }); if (w) veNgan(w); }
+  }
+  function ve() {
+    var tot = 0, loi = 0, khach = 0;
+    DS.forEach(function (w) { var t = trangThai(w); if (t.nhom === "tot") tot++; if (t.nhom === "loi") loi++; khach += w.so_khach || 0; });
+    $("soTong").textContent = DS.length; $("soTot").textContent = tot; $("soLoi").textContent = loi; $("soKhach").textContent = khach;
+    var q = ($("timKiem").value || "").toLowerCase().trim();
+    var ds = DS.filter(function (w) {
+      if (LOC && trangThai(w).nhom !== LOC) return false;
+      return !q || [w.ten, w.link, w.ten_mien, w.thu_muc].join(" ").toLowerCase().indexOf(q) >= 0;
+    });
+    if (!DS.length) {
+      $("luoi").innerHTML = '<div class="trong" style="grid-column:1/-1"><h3>Chưa có web nào</h3><p>Bấm <b>Tìm web đã tạo</b> để TISA BOT tìm các web đã làm trong bộ não, hoặc <b>Thêm web</b> để nhập tay.<br>Muốn làm web mới: vào Hỏi nhanh, gõ <b>/ts-landing-page</b> rồi <b>/ts-dua-web-len-mang</b>.</p></div>';
+      return;
+    }
+    if (!ds.length) { $("luoi").innerHTML = '<div class="trong" style="grid-column:1/-1">Không có web khớp bộ lọc.</div>'; return; }
+    $("luoi").innerHTML = ds.map(function (w) {
+      var t = trangThai(w), k = w.kiem_tra || {}, anh = anhCua(w);
+      var ms = (k.muc || []).map(function (m) { return m.ms; }).filter(Boolean);
+      var ssl = (k.muc || []).map(function (m) { return m.ssl_ngay; }).filter(function (x) { return x != null; });
+      var ls = (w.lich_su || []).slice(-16), toiDa = Math.max.apply(null, ls.map(function (x) { return x.ms || 0; }).concat([800]));
+      var vach = ls.length ? ls.map(function (x) { return '<i class="' + (x.ok ? "" : "l") + '" style="height:' + (x.ok ? Math.max(18, Math.round(100 * (x.ms || 0) / toiDa)) : 100) + '%" title="' + esc(luc(x.luc)) + (x.ms ? " · " + tg(x.ms) : "") + '"></i>'; }).join("") : '<i class="r"></i><i class="r"></i><i class="r"></i>';
+      return '<article class="the" data-id="' + esc(w.id) + '">' +
+        '<div class="xem' + (anh ? " co-anh" : "") + '" data-mo="' + esc(w.id) + '"' + (anh ? ' style="background-image:url(\'' + esc(anh).replace(/'/g, "%27") + '\')"' : "") + '>' +
+          '<div class="chu-dau">' + esc((w.ten || "W").trim().charAt(0).toUpperCase()) + '</div>' +
+          '<span class="tt ' + t.lop + '"><i></i>' + t.chu + '</span>' + (w.nen_tang ? '<span class="nt">' + esc(w.nen_tang) + '</span>' : "") + '</div>' +
+        '<div class="than"><h3>' + esc(w.ten) + '</h3><div class="links">' +
+          (w.ten_mien ? '<a class="lk mien" href="' + esc(w.ten_mien) + '" target="_blank" rel="noopener">🔒 ' + esc(host(w.ten_mien)) + '</a>' : "") +
+          (w.link ? '<a class="lk" href="' + esc(w.link) + '" target="_blank" rel="noopener">' + esc(host(w.link)) + '</a>' : "") +
+          (!w.link && !w.ten_mien ? '<span class="lk">Chưa có link</span>' : "") + '</div>' +
+          '<div class="chi">' +
+            (ms.length ? '<span title="Thời gian phản hồi">⚡ ' + tg(Math.min.apply(null, ms)) + '</span>' : "") +
+            (ssl.length ? '<span class="' + (Math.min.apply(null, ssl) < 15 ? "xau" : "") + '" title="Chứng chỉ https còn hạn">🔒 ' + Math.min.apply(null, ssl) + ' ngày</span>' : "") +
+            '<span title="Khách để lại thông tin">👥 ' + (w.so_khach || 0) + ' khách</span>' +
+            ((w.du_lieu || {}).trang ? '<span title="Đã lấy nội dung trang về bộ não">🧠 đã nạp</span>' : "") +
+            (k.luc ? '<span>↻ ' + luc(k.luc) + '</span>' : "") + '</div>' +
+          '<div class="vach" title="Các lần kiểm tra gần đây">' + vach + '</div></div>' +
+        '<div class="chan-the">' +
+          (w.ten_mien || w.link ? '<a class="nut phu nho" href="' + esc(w.ten_mien || w.link) + '" target="_blank" rel="noopener">Mở web ↗</a>' : "") +
+          '<button class="nut phu nho" data-kt="' + esc(w.id) + '">Kiểm tra</button><button class="nut nho" data-mo="' + esc(w.id) + '">Quản lý</button></div></article>';
+    }).join("");
+  }
+
+  async function kiemTra(id, nut) {
+    var cu = nut ? nut.innerHTML : "";
+    if (nut) { nut.disabled = true; nut.innerHTML = '<span class="xoay"></span>'; }
+    try { await goi("/tisa-web/api/kiem-tra", id ? { id: id } : { tat_ca: 1 }); await nap(); bao(id ? "Đã kiểm tra xong" : "Đã kiểm tra tất cả web"); }
+    catch (e) { bao(e.message); }
+    finally { if (nut) { nut.disabled = false; nut.innerHTML = cu; } }
+  }
+
+  // ---------- Ngăn chi tiết ----------
+  function moNgan(id, tab) {
+    var w = DS.find(function (x) { return x.id === id; });
+    dangMo = id; tabMo = tab || "tong";
+    veNgan(w || null);
+    $("ngan").classList.add("mo"); $("man").classList.add("mo"); $("ngan").setAttribute("aria-hidden", "false");
+  }
+  function dongNgan() { dangMo = null; $("ngan").classList.remove("mo"); $("man").classList.remove("mo"); $("ngan").setAttribute("aria-hidden", "true"); }
+  function veNgan(w) {
+    $("nTen").textContent = w ? w.ten : "Thêm web mới";
+    [].forEach.call($("nTab").children, function (b) { b.classList.toggle("on", b.dataset.t === tabMo); b.hidden = !w && b.dataset.t !== "tong"; });
+    var h = "";
+    if (tabMo === "tong") h = veTong(w);
+    else if (tabMo === "ket-noi") h = veKetNoi(w);
+    else if (tabMo === "du-lieu") h = veDuLieu(w);
+    else if (tabMo === "khach") { h = veKhach(w); setTimeout(function () { napKhach(w); }, 0); }
+    else if (tabMo === "sua") h = veSua(w);
+    $("nThan").innerHTML = h;
+  }
+  function veTong(w) {
+    w = w || {};
+    var nt = ["", "Vercel", "Netlify", "Cloudflare", "GitHub Pages", "Firebase", "LadiPage", "WordPress", "Khác"];
+    return '<div class="o"><label>Tên web</label><input type="text" id="fTen" value="' + esc(w.ten) + '" placeholder="Landing page khoá MKT Agent"></div>' +
+      '<div class="hai"><div class="o"><label>Link chính</label><input type="url" id="fLink" value="' + esc(w.link) + '" placeholder="ten-trang.vercel.app"></div>' +
+      '<div class="o"><label>Tên miền riêng</label><input type="url" id="fMien" value="' + esc(w.ten_mien) + '" placeholder="khoahoc.tenmien.vn"><small>Để trống nếu chưa gắn.</small></div></div>' +
+      '<div class="hai"><div class="o"><label>Nền tảng</label><select id="fNt">' + nt.map(function (x) { return '<option value="' + x + '"' + ((w.nen_tang || "") === x ? " selected" : "") + ">" + (x || "Tự nhận biết") + "</option>"; }).join("") + '</select></div>' +
+      '<div class="o"><label>Thư mục mã nguồn trong bộ não</label><input type="text" id="fThu" value="' + esc(w.thu_muc) + '" placeholder="04-ket-qua/2026-11/2026-11-09-landing-…"></div></div>' +
+      '<div class="o"><label>Ghi chú</label><textarea id="fGhi" placeholder="Mục đích trang, chiến dịch quảng cáo đang dẫn về…">' + esc(w.ghi_chu) + '</textarea></div>' +
+      (w.tao ? '<p style="color:var(--mo);font-size:12.5px">Thêm ' + luc(w.tao) + (w.cap_nhat ? " · sửa " + luc(w.cap_nhat) : "") + '</p>' : "") +
+      '<div class="hang" style="justify-content:space-between;margin-top:16px">' + (w.id ? '<button class="nut do" id="fXoa">Bỏ khỏi danh sách</button>' : "<span></span>") +
+      '<button class="nut" id="fLuu">' + (w.id ? "Lưu thay đổi" : "Thêm web") + '</button></div>';
+  }
+  function veKetNoi(w) {
+    var k = w.kiem_tra;
+    var h = '<div class="hang" style="justify-content:space-between;margin-bottom:14px"><div>' + (k ? "Kiểm tra " + luc(k.luc) : "Chưa kiểm tra lần nào") + '</div><button class="nut nho" id="kKt">↻ Kiểm tra ngay</button></div>';
+    if (k) h += k.muc.map(function (m) {
+      return '<div class="khoi"><h4>' + (m.loai === "ten_mien" ? "Tên miền riêng" : "Link chính") + ' <span class="pill ' + (m.ok ? "tot" : "loi") + '">' + (m.ok ? "Hoạt động" : "Lỗi") + '</span></h4>' +
+        '<table class="kq"><tr><td>Địa chỉ</td><td><a href="' + esc(m.url) + '" target="_blank" rel="noopener">' + esc(m.url) + '</a></td></tr>' +
+        (m.ma ? '<tr><td>Mã trả về</td><td>' + m.ma + (m.ma >= 200 && m.ma < 400 ? " (bình thường)" : "") + '</td></tr>' : "") +
+        (m.ms ? '<tr><td>Thời gian phản hồi</td><td>' + tg(m.ms) + (m.ms > 3000 ? " · chậm" : "") + '</td></tr>' : "") +
+        (m.ssl_ngay != null ? '<tr><td>Chứng chỉ https</td><td>còn ' + m.ssl_ngay + ' ngày</td></tr>' : "") +
+        (m.url_cuoi && m.url_cuoi !== m.url ? '<tr><td>Chuyển tới</td><td>' + esc(m.url_cuoi) + '</td></tr>' : "") +
+        (m.tieu_de ? '<tr><td>Tiêu đề trang</td><td>' + esc(m.tieu_de) + '</td></tr>' : "") +
+        (m.mo_ta ? '<tr><td>Mô tả chia sẻ</td><td>' + esc(m.mo_ta) + '</td></tr>' : "") +
+        (m.loi ? '<tr><td>Lỗi</td><td style="color:var(--do)">' + esc(m.loi) + '</td></tr>' : "") + '</table>' +
+        (!m.ok && m.loai === "ten_mien" ? '<p style="margin-top:10px">Tên miền lỗi thường do bản ghi DNS chưa trỏ đúng hoặc chưa đủ thời gian cập nhật. Sang tab <b>Sửa web</b>, bấm <b>Gắn tên miền</b> để AI kiểm tra và chỉ từng bước.</p>' : "") + '</div>';
+    }).join("");
+    var ls = (w.lich_su || []).slice().reverse();
+    if (ls.length) h += '<div class="khoi"><h4>Lịch sử kiểm tra</h4><table class="kq">' + ls.slice(0, 12).map(function (x) {
+      return '<tr><td>' + esc(new Date(x.luc).toLocaleString("vi-VN")) + '</td><td><span class="pill ' + (x.ok ? "tot" : "loi") + '">' + (x.ok ? "Tốt" : "Lỗi") + '</span>' + (x.ms ? " · " + tg(x.ms) : "") + '</td></tr>';
+    }).join("") + '</table></div>';
+    return h;
+  }
+  function veDuLieu(w) {
+    var d = w.du_lieu || {};
+    return '<p style="color:var(--mo);margin-top:0">Nạp nội dung web vào bộ não để Hỏi nhanh, chuyên gia và Chatbot trả lời khách đúng giá, ưu đãi, thông tin trên trang. Dữ liệu lưu ở <code>02-kien-thuc/web/' + esc(w.slug || "") + '/</code>.</p>' +
+      '<div class="khoi"><h4>🌐 Nội dung trang web</h4><p>TISA BOT mở web, lấy toàn bộ chữ hiển thị (tiêu đề, giá, ưu đãi, câu hỏi thường gặp…).</p>' +
+        (d.trang ? '<p>Lần gần nhất: <b>' + luc(d.trang.luc) + '</b> · ' + d.trang.ky_tu + ' ký tự · <code>' + esc(d.trang.tep) + '</code></p>' : "") +
+        '<button class="nut nho" id="dTrang"' + (w.link || w.ten_mien ? "" : " disabled") + '>' + (d.trang ? "Lấy lại nội dung mới" : "Lấy nội dung về bộ não") + '</button></div>' +
+      '<div class="khoi"><h4>📊 Google Sheet</h4><p>Bảng giá, lịch học, danh sách sản phẩm trên Google Sheet. Trong Sheet: <b>Tệp → Chia sẻ → Xuất bản lên web → chọn CSV</b>, dán link vào đây.</p>' +
+        '<div class="hang" style="flex-wrap:nowrap"><input type="url" id="dSheet" value="' + esc(w.sheet_csv) + '" placeholder="https://docs.google.com/spreadsheets/d/e/…/pub?output=csv"><button class="nut nho" id="dSheetLuu">Lưu & lấy</button></div>' +
+        (d.sheet ? '<p style="margin-top:8px">Lần gần nhất: <b>' + luc(d.sheet.luc) + '</b> · ' + d.sheet.dong + ' dòng · <code>' + esc(d.sheet.tep) + '</code></p>' : "") + '</div>' +
+      '<div class="khoi"><h4>💬 Cho Chatbot dùng dữ liệu này</h4><p>Chatbot chỉ đọc tài liệu anh cho phép. Vào <b>Chatbot → Bot</b>, mở bot đang trực khách, thêm thư mục <code>02-kien-thuc/web/' + esc(w.slug || "") + '</code> vào tài liệu được đọc.</p></div>';
+  }
+  function veKhach(w) {
+    var url = CK ? CK + "/tisa-web/thu/" + w.khoa : "";
+    var maForm = url ? '<form action="' + url + '" method="POST">\n  <input name="ho_ten" placeholder="Họ tên" required>\n  <input name="so_dien_thoai" placeholder="Số điện thoại" required>\n  <input name="_gotcha" style="display:none">\n  <button type="submit">Đăng ký</button>\n</form>' : "";
+    return '<div class="khoi"><h4>📨 Địa chỉ nhận khách của web này</h4>' +
+      (url ? '<p>Form trên web gửi về địa chỉ này, khách hiện ở dưới và lưu vào bộ não (<code>02-kien-thuc/web/' + esc(w.slug) + '/khach-de-lai-thong-tin.md</code>).</p><div class="ma">' + esc(url) + '<button class="chep" data-chep="' + esc(url) + '">Chép</button></div>'
+        : '<p style="color:var(--vang)">Cần bật <b>Truy cập từ xa</b> (Hệ thống → Cài đặt) để có địa chỉ công khai cho form gửi về.</p>') +
+      '<div class="hang" style="margin-top:10px"><button class="nut nho" id="kGan"' + (url ? "" : " disabled") + '>Nhờ AI gắn form vào web</button><button class="nut phu nho" id="kDoi">Đổi địa chỉ nhận</button></div></div>' +
+      (url ? '<details class="khoi"><summary style="cursor:pointer;font-weight:700">Mã form mẫu để tự dán</summary><div class="ma" style="margin-top:10px">' + esc(maForm) + '<button class="chep" data-chep="' + esc(maForm) + '">Chép</button></div></details>' : "") +
+      '<div class="khoi"><h4>👥 Khách đã để lại <span class="pill cho" id="kDem">…</span></h4><div id="kDs">Đang tải…</div></div>';
+  }
+  async function napKhach(w) {
+    try {
+      var j = await goi("/tisa-web/api/khach?id=" + encodeURIComponent(w.id)), ds = j.khach || [];
+      if ($("kDem")) $("kDem").textContent = ds.length;
+      if (!$("kDs")) return;
+      if (!ds.length) { $("kDs").innerHTML = '<p style="color:var(--mo);margin:0">Chưa có khách nào gửi form.</p>'; return; }
+      var cot = []; ds.forEach(function (x) { Object.keys(x.du_lieu || {}).forEach(function (k) { if (cot.indexOf(k) < 0 && cot.length < 5) cot.push(k); }); });
+      $("kDs").innerHTML = '<div style="overflow-x:auto"><table class="bang-khach"><tr><th>Lúc</th>' + cot.map(function (c) { return "<th>" + esc(tenCot(c)) + "</th>"; }).join("") + '</tr>' +
+        ds.slice(0, 100).map(function (x) { return "<tr><td>" + esc(new Date(x.luc).toLocaleString("vi-VN")) + "</td>" + cot.map(function (c) { return "<td>" + esc((x.du_lieu || {})[c] || "") + "</td>"; }).join("") + "</tr>"; }).join("") + "</table></div>";
+    } catch (e) { if ($("kDs")) $("kDs").textContent = e.message; }
+  }
+  function veSua(w) {
+    var bang = { Vercel: "https://vercel.com/dashboard", Netlify: "https://app.netlify.com", Cloudflare: "https://dash.cloudflare.com", "GitHub Pages": "https://github.com" }[w.nen_tang];
+    return '<div class="viec">' +
+      '<div class="khoi"><h4>✏️ Nhờ AI sửa nội dung trang</h4><p>Ghi điều muốn đổi, TISA BOT sửa mã nguồn rồi đưa lên lại đúng link cũ.</p><textarea id="sYeuCau" placeholder="Ví dụ: đổi giá khoá học thành 2.990.000đ, thêm ảnh lớp học, đổi màu nút Đăng ký sang cam"></textarea><button class="nut nho" id="sSua" style="margin-top:10px">Gửi cho AI sửa</button></div>' +
+      '<div class="khoi"><h4>🔗 Gắn tên miền riêng</h4><p>AI kiểm tra tên miền, chỉ từng bản ghi DNS cần thêm ở nơi mua tên miền.</p><div class="hang" style="flex-wrap:nowrap"><input type="text" id="sMien" placeholder="khoahoc.tenmien.vn" value="' + esc(host(w.ten_mien)) + '"><button class="nut nho" id="sGan">Nhờ AI gắn</button></div></div>' +
+      '<div class="khoi"><h4>🚀 Đưa bản mới lên mạng</h4><p>Đã sửa mã nguồn bằng tay? Nhờ AI đưa bản mới lên đúng link cũ.</p><button class="nut phu nho" id="sDua">Nhờ AI cập nhật</button></div>' +
+      '<div class="khoi"><h4>📁 Mã nguồn và trang quản trị</h4><p>' + (w.thu_muc ? "<code>" + esc(w.thu_muc) + "</code>" : "Chưa ghi thư mục mã nguồn (nhập ở tab Tổng quan).") + '</p><div class="hang">' +
+        (w.thu_muc ? '<button class="nut phu nho" id="sThu">Mở thư mục trên máy</button>' : "") +
+        (bang ? '<a class="nut phu nho" href="' + bang + '" target="_blank" rel="noopener">Trang quản trị ' + esc(w.nen_tang) + ' ↗</a>' : "") + '</div></div></div>';
+  }
+
+  // ---------- Sự kiện ----------
+  document.addEventListener("click", async function (e) {
+    var t = e.target.closest("button, [data-mo]"); if (!t) return;
+    if (t.dataset.mo) { moNgan(t.dataset.mo, "tong"); return; }
+    if (t.dataset.kt) { kiemTra(t.dataset.kt, t); return; }
+    if (t.dataset.chep) { navigator.clipboard.writeText(t.dataset.chep); t.textContent = "Đã chép"; return; }
+    if (t.dataset.t) { tabMo = t.dataset.t; veNgan(DS.find(function (x) { return x.id === dangMo; }) || null); return; }
+    if (t.dataset.l !== undefined && t.parentNode.id === "loc") { LOC = t.dataset.l; [].forEach.call($("loc").querySelectorAll("button"), function (b) { b.classList.toggle("on", b === t); }); ve(); return; }
+    var w = DS.find(function (x) { return x.id === dangMo; });
+    switch (t.id) {
+      case "nutThem": moNgan(null, "tong"); break;
+      case "nutKtTat": if (DS.length) kiemTra(null, t); break;
+      case "nDong": dongNgan(); break;
+      case "fLuu":
+        try {
+          var j = await goi("/tisa-web/api/luu", { id: w && w.id, ten: $("fTen").value, link: $("fLink").value, ten_mien: $("fMien").value, nen_tang: $("fNt").value, thu_muc: $("fThu").value, ghi_chu: $("fGhi").value, sheet_csv: w ? w.sheet_csv : "" });
+          dangMo = j.web.id; await nap(); bao("Đã lưu"); if (!w) kiemTra(j.web.id);
+        } catch (er) { bao(er.message); }
+        break;
+      case "fXoa": if (w && confirm("Bỏ \"" + w.ten + "\" khỏi danh sách? Web trên mạng và mã nguồn không bị xoá.")) { await goi("/tisa-web/api/xoa", { id: w.id }); dongNgan(); nap(); } break;
+      case "kKt": kiemTra(w.id, t); break;
+      case "dTrang":
+        t.disabled = true; t.innerHTML = '<span class="xoay"></span> Đang lấy…';
+        try { var r = await goi("/tisa-web/api/lay-trang", { id: w.id }); bao("Đã nạp " + r.ky_tu + " ký tự vào bộ não" + (r.canh_bao ? ". " + r.canh_bao : "")); await nap(); }
+        catch (er) { bao(er.message); t.disabled = false; t.textContent = "Thử lại"; }
+        break;
+      case "dSheetLuu":
+        t.disabled = true;
+        try { await goi("/tisa-web/api/luu", Object.assign({}, w, { sheet_csv: $("dSheet").value })); var s = await goi("/tisa-web/api/lay-sheet", { id: w.id }); bao("Đã lấy " + s.dong + " dòng vào bộ não"); await nap(); }
+        catch (er) { bao(er.message); } finally { t.disabled = false; }
+        break;
+      case "kDoi": if (confirm("Đổi địa chỉ nhận? Form cũ trên web sẽ ngừng gửi được cho tới khi cập nhật địa chỉ mới.")) { await goi("/tisa-web/api/doi-khoa", { id: w.id }); await nap(); bao("Đã đổi địa chỉ nhận"); } break;
+      case "kGan": giaoWeb("Gắn form để khách để lại thông tin vào " + noiWeb(w) + ". Form gửi bằng POST tới " + CK + "/tisa-web/thu/" + w.khoa + " với các ô ho_ten, so_dien_thoai (thêm ô ẩn _gotcha để chặn spam), gửi xong hiện lời cảm ơn ngay trên trang. Sửa xong đưa lên lại đúng link cũ bằng /ts-dua-web-len-mang, rồi gửi thử một lần và báo tôi."); break;
+      case "sSua": var yc = ($("sYeuCau").value || "").trim(); if (!yc) { bao("Ghi điều muốn sửa trước"); return; } giaoWeb("Sửa " + noiWeb(w) + ": " + yc + ". Sửa xong đưa lên lại đúng link cũ bằng /ts-dua-web-len-mang, mở kiểm tra trên điện thoại rồi báo tôi."); break;
+      case "sGan": var m = ($("sMien").value || "").trim(); if (!m) { bao("Nhập tên miền trước"); return; } giaoWeb("/ts-dua-web-len-mang gắn tên miền " + m + " vào " + noiWeb(w) + ". Kiểm tra DNS hiện tại của tên miền, chỉ tôi từng bản ghi cần thêm, xong thì kiểm tra lại https."); break;
+      case "sDua": giaoWeb("/ts-dua-web-len-mang cập nhật bản mới của " + noiWeb(w) + " lên đúng link cũ, rồi báo tôi link và kết quả kiểm tra."); break;
+      case "sThu":
+        try { await goi("/tisa-mo-tep", { path: w.thu_muc, cach: "thu-muc" }); bao("Đã mở thư mục trên máy"); }
+        catch (er) { bao(er.message === "Lỗi 403" ? "Chỉ mở được trên máy đang chạy TISA BOT" : er.message); }
+        break;
+      case "nutTim": timWeb(); break;
+      case "nutThemTim":
+        var chon = [].filter.call($("dsTim").querySelectorAll("input:checked"), function () { return true; });
+        for (var i = 0; i < chon.length; i++) { var u = timDs[+chon[i].value]; try { await goi("/tisa-web/api/luu", u); } catch (er) { bao(u.ten + ": " + er.message); } }
+        $("hopTim").close(); await nap(); if (chon.length) { bao("Đã thêm " + chon.length + " web, đang kiểm tra…"); kiemTra(null); }
+        break;
+    }
+  });
+  var timDs = [];
+  async function timWeb() {
+    $("dsTim").innerHTML = '<p><span class="xoay"></span> Đang tìm trong bộ não…</p>'; $("hopTim").showModal();
+    try {
+      timDs = (await goi("/tisa-web/api/tim")).ung_vien || [];
+      $("nutThemTim").hidden = !timDs.length;
+      $("dsTim").innerHTML = timDs.length ? '<p style="color:var(--mo);margin-top:0">Tìm thấy ' + timDs.length + ' web trong các kết quả đã làm. Chọn web muốn đưa vào quản lý.</p>' + timDs.map(function (u, i) {
+        return '<label class="uv"><input type="checkbox" value="' + i + '" checked><div><b>' + esc(u.ten) + '</b>' + (u.nen_tang ? ' <span class="pill cho">' + esc(u.nen_tang) + '</span>' : "") +
+          '<small>' + esc(u.ten_mien || u.link || "Chưa có link (mới có mã nguồn)") + '</small><small>📁 ' + esc(u.thu_muc) + '</small></div></label>';
+      }).join("") : '<div class="trong">Chưa thấy web nào mới trong bộ não.<br>Web làm bằng /ts-landing-page và đưa lên bằng /ts-dua-web-len-mang sẽ tự hiện ở đây.</div>';
+    } catch (e) { $("dsTim").textContent = e.message; }
+  }
+  $("man").onclick = dongNgan;
+  document.addEventListener("keydown", function (e) { if (e.key === "Escape" && $("ngan").classList.contains("mo")) dongNgan(); });
+  $("timKiem").oninput = ve;
+  // "Thêm web" mở ngăn trống: dangMo = null nhưng ngăn vẫn mở.
+  var moCu = moNgan; moNgan = function (id, tab) { moCu(id, tab); if (!id) dangMo = null; };
+  nap().catch(function (e) { $("luoi").innerHTML = '<div class="trong">' + esc(e.message) + '</div>'; });
+  setInterval(function () { if (!document.hidden && !$("ngan").classList.contains("mo")) nap().catch(function () {}); }, 60000);
+})();
+</script>
+
+<script>
+/* Web mẫu có sẵn (tisa_web_mau.py): Web CRM + Lead Page/Sale Page, chạy trên máy, nhân bản, nối TISA BOT, Zalo. */
+(function () {
+  "use strict";
+  var $ = function (id) { return document.getElementById(id); };
+  var M = null, cho = null;
+  function esc(s) { return String(s == null ? "" : s).replace(/[&<>"']/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]; }); }
+  function bao(t) { var e = $("toast"); e.textContent = t; e.classList.add("hien"); clearTimeout(bao._t); bao._t = setTimeout(function () { e.classList.remove("hien"); }, 3200); }
+  async function goi(url, body) {
+    var r = await fetch(url, body === undefined ? { credentials: "same-origin", cache: "no-store" } :
+      { method: "POST", credentials: "same-origin", headers: { "content-type": "application/json" }, body: JSON.stringify(body) });
+    var j = await r.json().catch(function () { return {}; });
+    if (!r.ok || j.ok === false) throw Object.assign(new Error(j.error || ("Lỗi " + r.status)), { data: j });
+    return j;
+  }
+  function giaoWeb(text, tieu) {
+    text = "Dùng kỹ năng dq-quan-tri-web (cộng sự Quản Trị WEB), đọc SKILL.md và sổ tay trong đó trước khi làm. Web mẫu có sẵn của TISA BOT (Web CRM và Lead Page & Sale Page, kỹ năng tisa-web-crm-lead) thì làm theo cách của gói, không dựng lại từ đầu. Việc đưa lên Cloudflare, gắn tên miền: xong thì ghi hồ sơ bằng scripts/ghi-chep-web.py kèm --thu-muc-ma (đúng thư mục mã nguồn của web) để thẻ trên trang Quản lý web tự hiện tên miền, tên web và SEO mới. " + text;
+    try { if (window.parent === window) throw 0; window.parent.postMessage({ tisa: "nho-tisabot", agent: "tisa-quan-tri-web", text: text, tieu_de: tieu || "Quản Trị WEB" }, location.origin); bao("Đã giao cho Quản Trị WEB, xem tiến độ ở khung chat."); }
+    catch (e) { try { navigator.clipboard.writeText(text); } catch (x) {} bao("Đã chép yêu cầu, dán vào ô chat TISA BOT."); }
+  }
+  var IC = {
+    crm: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="16" rx="3"/><path d="M3 9h18M8 14h3M8 17h6M15 13.5l1.5 1.5 3-3"/></svg>',
+    lead: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1.5"/></svg>'
+  };
+  function boCua(t) { return (M.bo || []).find(function (b) { return b.id === t.bo; }) || {}; }
+  function linkTrang(t, cong) { return (cong ? M.cong_khai : M.goc_tisa) + "/tisa-web/trang/" + t.slug + "/"; }
+  function crmLink(b) { var u = (b.hien && b.hien.link) || b.crm_public; return u ? String(u).replace(/\/+$/, "") : "http://localhost:" + b.cong_crm; }
+  function crmChu(b) { var u = (b.hien && b.hien.link) || b.crm_public; return (u ? String(u).replace(/^https?:\/\//, "").replace(/\/+$/, "") : "localhost:" + b.cong_crm); }
+  /* V3.34: địa chỉ THẬT đang chạy (tên miền riêng nếu đã gắn), tên web và SEO lấy từ chính web đó. */
+  function gioMoi(iso) { try { return new Date(iso * 1000).toLocaleTimeString("vi-VN", { hour: "2-digit", minute: "2-digit" }); } catch (e) { return ""; } }
+  function khoiSeo(x, loai, id) {
+    var h = x.hien || {}, s = h.seo || {};
+    if (!h.link || h.link.indexOf("http") !== 0 || /^https?:\/\/(localhost|127\.)/i.test(h.link)) return "";
+    var nutLm = '<button type="button" data-mau="lam-moi" data-loai="' + loai + '" data-id="' + esc(id) + '" title="Đọc lại tên web, mô tả và ảnh chia sẻ từ web thật">⟳ Cập nhật</button>';
+    if (s.loi && !s.tieu_de) return '<div class="seo loi"><div class="seo-ch"><b>Chưa đọc được thông tin web</b><small>' + esc(s.loi) + '</small><span class="seo-tt">' + nutLm + '</span></div></div>';
+    if (!s.tieu_de && !s.anh) return '<div class="seo"><div class="seo-ch"><small>Đang đọc tên web, mô tả và ảnh chia sẻ từ ' + esc(h.host) + '…</small></div></div>';
+    return '<div class="seo">' + (s.anh ? '<img src="' + esc(s.anh) + '" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.style.display=\'none\'">' : "") +
+      '<div class="seo-ch"><b>' + esc(s.tieu_de_chia_se || s.tieu_de || h.host) + '</b>' + (s.mo_ta ? '<small>' + esc(s.mo_ta) + '</small>' : '<small>Chưa có mô tả (SEO). Nhờ Quản Trị WEB thêm.</small>') +
+      '<span class="seo-tt">' + (s.loi ? '⚠ ' + esc(s.loi) : '✓ Đọc từ web thật' + (s.luc ? " lúc " + gioMoi(s.luc) : "")) + ' · ' + nutLm + '</span></div></div>';
+  }
+  function trangMo(t) { var u = t.hien && t.hien.mien_rieng ? t.hien.link : ""; return u || linkTrang(t, !!M.cong_khai); }
+  function chuMien(x, macDinh) {
+    var h = x.hien || {};
+    return h.link && h.link.indexOf("http") === 0 && !/^https?:\/\/(localhost|127\.)/i.test(h.link) ? String(h.link).replace(/^https?:\/\//, "").replace(/\/+$/, "") : macDinh;
+  }
+  function ttBo(b) {
+    if (b.dang_khoi_dong) return { lop: "chay", chu: "Đang khởi động…" };
+    if (b.crm_chay) return { lop: "tot", chu: "Đang chạy" };
+    if (!b.da_giai_nen) return { lop: "", chu: "Chưa cài trên máy" };
+    if (b.loi) return { lop: "loi", chu: "Chạy lỗi" };
+    return { lop: "", chu: "Đang tắt" };
+  }
+  async function nap() {
+    try { M = await goi("/tisa-web/api/mau"); } catch (e) { return; }
+    $("mauKhoi").hidden = false;
+    ve();
+    clearTimeout(cho);
+    if ((M.bo || []).some(function (b) { return b.dang_khoi_dong; })) cho = setTimeout(nap, 4000);
+  }
+  function ve() {
+    var n = M.node || {}, g = M.goi || {};
+    $("mauTt").innerHTML =
+      (g.co ? '<span class="ok">✓ Gói web mẫu ' + esc(g.ban) + '</span>' : '<span class="thieu">Chưa cài gói web mẫu <button class="nut nho" data-mau="cai-goi" style="margin-left:4px">Cài gói</button></span>') +
+      (n.du ? '<span class="ok">✓ Node.js ' + esc(n.ban) + '</span>' : '<span class="thieu" title="Web CRM cần Node.js 22.13 trở lên">⚠ Cần Node.js 22.13+ ' + (n.ban ? "(đang có " + esc(n.ban) + ")" : "") + ' · <a href="https://nodejs.org" target="_blank" rel="noopener">tải</a></span>');
+    var h = "", theTrang = {};
+    (M.trang || []).forEach(function (t) { (theTrang[t.bo] = theTrang[t.bo] || []).push(t); });
+    (M.bo || []).forEach(function (b) {
+      var t = ttBo(b), noi = b.noi_bot || {}, daNoi = noi.tro_ly && noi.chatbot;
+      h += '<article class="the mau crm">' +
+        '<div class="xem"><div class="bieu">' + IC.crm + '</div><span class="tt ' + t.lop + '"><i></i>' + t.chu + '</span><span class="nhan-mau">' + (b.mac_dinh ? "Mặc định" : "Bản sao") + '</span></div>' +
+        '<div class="than"><h3>' + esc(b.ten) + '</h3>' +
+          '<p class="mota">Quản lý khách, đơn, sale (KPI, hoa hồng), báo cáo. Khách từ Lead Page và chatbot Fanpage/Zalo tự vào đây.</p>' +
+          '<div class="links">' + (b.crm_chay || (b.hien && b.hien.mien_rieng) ? '<a class="lk mien' + (b.hien && b.hien.mien_rieng ? ' rieng' : '') + '" href="' + esc(crmLink(b)) + '/admin" target="_blank" rel="noopener">' + esc(crmChu(b)) + '/admin</a>' : '<span class="lk">' + esc(crmChu(b)) + '</span>') +
+          (b.hien && b.hien.mien_rieng ? '<span class="nhan-rieng" title="Tên miền riêng của anh">Tên miền riêng</span>' : "") +
+          '<button type="button" class="lk" data-mau="dat-web" data-loai="bo" data-id="' + esc(b.id) + '" title="Đặt hoặc sửa tên miền đang chạy thật của CRM và tên web">🌐 ' + (b.hien && b.hien.link ? "Đổi tên miền" : "Đặt tên miền") + '</button>' +
+          '<span class="noi ' + (daNoi ? "co" : "chua") + '">' + (daNoi ? "🤖 Đã nối TISA BOT" : "Chưa nối TISA BOT") + '</span></div>' +
+          khoiSeo(b, "bo", b.id) +
+          (b.admin && b.admin.email ? '<div class="chi"><span title="Tài khoản quản trị của Web CRM trên máy này">🔑 Đăng nhập: ' + esc(b.admin.email) + ' · mật khẩu do anh đặt</span></div>'
+            : b.crm_chay ? '<div class="chi"><span title="Tài khoản xem thử trên máy">🔑 admin / 123456 · đổi trước khi dùng thật</span></div>' : "") +
+          (b.loi && !b.crm_chay ? '<div class="chi"><span class="xau">Lần chạy trước bị lỗi. Bấm Quản lý → Nhờ AI sửa.</span></div>' : "") +
+        '</div><div class="chan-the">' +
+          (b.crm_chay ? '<a class="nut phu nho" href="' + esc(crmLink(b)) + '/login" target="_blank" rel="noopener">Mở CRM ↗</a><button class="nut phu nho" data-mau="tat" data-id="' + esc(b.id) + '">Tắt</button>'
+            : '<button class="nut nho" data-mau="chay" data-id="' + esc(b.id) + '"' + (b.dang_khoi_dong ? " disabled" : "") + '>' + (b.dang_khoi_dong ? '<span class="xoay"></span> Đang chạy…' : (b.da_giai_nen ? "▶ Chạy" : "Cài và chạy")) + '</button>') +
+          '<button class="nut phu nho" data-mau="doi-dn" data-id="' + esc(b.id) + '" title="Quên mật khẩu hoặc muốn đổi tài khoản admin: đặt lại email, tên và mật khẩu ở đây">🔑 Đổi đăng nhập</button>' +
+          '<button class="nut phu nho" data-mau="nb-bo" data-id="' + esc(b.id) + '">⧉ Nhân bản</button>' +
+          '<button class="nut nho" data-mau="ql-bo" data-id="' + esc(b.id) + '">Quản lý</button>' +
+          '<button class="nut nho cf-nut-the cf-tu-dong" data-mau="cf-tu-dong" data-id="' + esc(b.id) + '" title="TISA BOT tự thao tác lên Cloudflare giúp anh chị: có chat và gọi điện hướng dẫn từng bước ở góc màn hình">⚡ Kết nối tự động</button>' +
+          '<button class="nut nho cf-nut-the" data-mau="cf-mo" data-id="' + esc(b.id) + '" title="Đưa Web CRM lên mạng để chạy 24/7, không cần mở máy">☁ Cloudflare 24/7</button></div></article>';
+      (theTrang[b.id] || []).forEach(veTrang);
+    });
+    function veTrang(t) {
+      var b = boCua(t), co = b.da_giai_nen, nhan = b.crm_chay;
+      var tt = !co ? { lop: "", chu: "Chưa cài trên máy" } : nhan ? { lop: "tot", chu: "Đang nhận khách" } : { lop: "cham", chu: "CRM đang tắt" };
+      h += '<article class="the mau lead">' +
+        '<div class="xem"><div class="bieu">' + IC.lead + '</div><span class="tt ' + tt.lop + '"><i></i>' + tt.chu + '</span><span class="nhan-mau">' + (t.mac_dinh ? "Mặc định" : "Bản sao") + '</span></div>' +
+        '<div class="than"><h3>' + esc(t.ten) + '</h3>' +
+          '<p class="mota">Trang lấy số điện thoại và trang bán gói chính. Form đổ thẳng vào ' + esc(b.ten || "Web CRM") + '.</p>' +
+          '<div class="links">' + (M.cong_khai || (t.hien && t.hien.mien_rieng) ? '<a class="lk mien' + (t.hien && t.hien.mien_rieng ? ' rieng' : '') + '" href="' + esc((t.hien && t.hien.link) || linkTrang(t, true)) + '" target="_blank" rel="noopener">🌐 ' + esc(chuMien(t, linkTrang(t, true).replace(/^https?:\/\//, ""))) + '</a>' : '<span class="lk" title="Bật Truy cập từ xa để có link công khai">Chưa có link công khai</span>') +
+          (t.hien && t.hien.mien_rieng ? '<span class="nhan-rieng" title="Tên miền riêng của anh">Tên miền riêng</span>' : "") +
+          '<button type="button" class="lk" data-mau="dat-web" data-loai="trang" data-id="' + esc(t.id) + '" title="Đặt hoặc sửa tên miền đang chạy thật của trang và tên web">🌐 ' + (t.hien && t.hien.mien_rieng ? "Đổi tên miền" : "Đặt tên miền") + '</button></div>' +
+          khoiSeo(t, "trang", t.id) +
+        '</div><div class="chan-the">' +
+          (co ? '<a class="nut phu nho" href="' + esc(trangMo(t)) + '" target="_blank" rel="noopener">Mở trang ↗</a><a class="nut phu nho" href="' + esc(trangMo(t).replace(/\/?$/, "/") + 'ban-hang/') + '" target="_blank" rel="noopener">Trang bán ↗</a>'
+              : '<button class="nut nho" data-mau="chay" data-id="' + esc(b.id) + '">Cài và chạy</button>') +
+          '<button class="nut phu nho" data-mau="nb-trang" data-id="' + esc(t.id) + '">⧉ Nhân bản</button>' +
+          '<button class="nut nho" data-mau="ql-trang" data-id="' + esc(t.id) + '">Quản lý</button>' +
+          '<button class="nut nho cf-nut-the cf-tu-dong" data-mau="cf-tu-dong" data-id="' + esc(t.id) + '" title="TISA BOT tự thao tác lên Cloudflare giúp anh chị: có chat và gọi điện hướng dẫn từng bước ở góc màn hình">⚡ Kết nối tự động</button>' +
+          '<button class="nut nho cf-nut-the" data-mau="cf-mo" data-id="' + esc(t.id) + '" title="Đưa trang lên Cloudflare Pages để chạy 24/7, không cần mở máy">☁ Cloudflare 24/7</button></div></article>';
+    }
+    $("mauLuoi").innerHTML = h;
+  }
+  function hoi(tieu, nhan, goiY, macDinh) {
+    return new Promise(function (xong) {
+      $("hhTieu").textContent = tieu; $("hhNhan").textContent = nhan; $("hhGoiY").textContent = goiY || ""; $("hhO").value = macDinh || "";
+      var d = $("hopHoi"), da = false;
+      $("hhOk").onclick = function () { da = true; d.close(); xong($("hhO").value.trim()); };
+      $("hhO").onkeydown = function (e) { if (e.key === "Enter") $("hhOk").click(); };
+      d.onclose = function () { if (!da) xong(null); };
+      d.showModal(); setTimeout(function () { $("hhO").select(); }, 30);
+    });
+  }
+  function viec(i, m, tieu, mo, hanh) { return '<button data-mau="' + hanh.split(":")[0] + '" data-id="' + esc(hanh.split(":")[1] || "") + '"><i style="--m:' + m + '">' + i + '</i><span><b>' + tieu + '</b><small>' + mo + '</small></span></button>'; }
+  function moQl(loai, id) {
+    var x = (loai === "bo" ? M.bo : M.trang).find(function (y) { return y.id === id; }); if (!x) return;
+    var b = loai === "bo" ? x : boCua(x), duong = loai === "bo" ? b.goc : b.goc + "/" + x.thu_muc_con;
+    $("hmTen").textContent = x.ten;
+    var h = '<div class="o"><label>Thư mục mã nguồn trên máy</label><div class="duong"><span>' + esc(duong) + '</span><button class="nut phu nho" data-chep-mau="' + esc(duong) + '">Chép</button></div></div>';
+    if (loai === "trang") {
+      h += '<div class="o"><label>Link trang</label><div class="duong"><span>' + esc(linkTrang(x, !!M.cong_khai)) + '</span><button class="nut phu nho" data-chep-mau="' + esc(linkTrang(x, !!M.cong_khai)) + '">Chép</button></div>' +
+        (M.cong_khai ? "" : '<small>Bật Hệ thống → Cài đặt → Truy cập từ xa để có link công khai cho khách.</small>') + '</div>';
+    }
+    if (loai === "bo") h += '<div class="tu-dong" id="tuDong"><h4>Tự động: chatbot → CRM → Zalo</h4><p style="margin:0;color:var(--mo);font-size:13px">Đang tải…</p></div>';
+    h += '<div class="viec-mau">';
+    if (loai === "bo") {
+      h += viec("🏢", "#6d45cb", "Dựng theo doanh nghiệp của tôi", "AI hỏi từng câu (tên, sản phẩm, giá, màu) rồi sửa CRM, Lead Page, Sale Page cho đúng doanh nghiệp.", "ai-dung:" + id) +
+           viec("🎨", "#ec4899", "Làm đẹp giao diện chuyên nghiệp", "AI chọn phong cách hợp ngành (8 chủ đề màu và chữ), chỉnh bố cục, ảnh, điện thoại. Giữ nguyên chữ, giá và form.", "ai-dep:" + id) +
+           viec("🔍", "#0891b2", "Soát chất lượng trước khi đăng", "Kiểm điện thoại, tốc độ, chữ mẫu còn sót, chia sẻ Zalo, độ dễ đọc. Chỉ báo cáo, chưa sửa gì.", "ai-soat:" + id) +
+           viec("🤖", "#0ea5e9", "Nối TISA BOT với CRM này", "Tạo khoá riêng (lưu kín trên máy), cho Hỏi nhanh và Đội Quân AI đọc, ghi khách, tạo đơn chờ thanh toán.", "noi:" + id) +
+           viec("💬", "#10b981", "Nối chatbot Fanpage / Zalo vào CRM", "Chatbot tự lưu tên, số điện thoại, nhu cầu, mức tiềm năng của khách vào CRM. AI hỏi trước khi sửa kịch bản.", "ai-chatbot:" + id) +
+           viec("📲", "#22c55e", "Lấy số trong CRM, kết bạn Zalo, nhắn chăm sóc", "Cùng anh chị viết mẫu lời mời và tin chào, chạy thử với số của anh chị. Mọi tự động tắt cho tới khi duyệt.", "ai-zalo:" + id) +
+           viec("🌐", "#f59e0b", "Đưa CRM lên mạng", "Chạy 24/7 trên Cloudflare bằng tài khoản của anh chị. Có 3 cách: TISA BOT làm qua kết nối Cloudflare, TISA BOT thao tác trên web giúp, hoặc tự làm theo hướng dẫn.", "cf-mo:" + id);
+    } else {
+      h += viec("✍️", "#ff6b35", "Sửa nội dung trang này", "Nhờ AI viết lại chữ, ảnh, sản phẩm, lời mời cho trang này.", "ai-sua:" + id) +
+           viec("🎨", "#ec4899", "Làm đẹp giao diện chuyên nghiệp", "AI chọn phong cách hợp ngành, chỉnh bố cục, ảnh, điện thoại. Giữ nguyên chữ, giá và form.", "ai-dep:" + id) +
+           viec("🔍", "#0891b2", "Soát chất lượng trước khi đăng", "Kiểm điện thoại, tốc độ, chữ mẫu còn sót, chia sẻ Zalo, độ dễ đọc. Chỉ báo cáo, chưa sửa gì.", "ai-soat:" + id) +
+           viec("🌐", "#f59e0b", "Gắn tên miền riêng", "Chạy 24/7 trên Cloudflare Pages, gắn được tên miền riêng, form vẫn đổ về CRM. Có 3 cách: TISA BOT làm qua kết nối Cloudflare, TISA BOT thao tác trên web giúp, hoặc tự làm.", "cf-mo:" + id);
+    }
+    h += viec("✏️", "#64748b", "Đổi tên", "Chỉ đổi tên hiện trong danh sách.", "doi-ten-" + loai + ":" + id);
+    if (!x.mac_dinh) h += viec("🗂", "#ef4444", "Bỏ khỏi danh sách", "Thư mục trên máy giữ nguyên, không xoá gì.", "go-" + loai + ":" + id);
+    h += '</div>';
+    $("hmThan").innerHTML = h;
+    $("hopMau").showModal();
+    if (loai === "bo") napTuDong();
+  }
+
+  /* ---------- Đưa Web CRM / Lead Page lên Cloudflare: 3 cách ---------- */
+  var CF = { id: "", loai: "bo", tt: null };
+  function cfDt() {
+    var tr = CF.loai === "trang" ? (M.trang || []).find(function (x) { return x.id === CF.id; }) : null;
+    var b = tr ? boCua(tr) : (M.bo || []).find(function (x) { return x.id === CF.id; });
+    return b && b.id ? { b: b, tr: tr || null } : null;
+  }
+  function cfLenh(c) { return '<div class="duong"><span>' + esc(c) + '</span><button class="nut phu nho" data-chep-mau="' + esc(c) + '">Chép</button></div>'; }
+  function cfThu(d) { return d.tr ? d.b.goc + "/" + d.tr.thu_muc_con : d.b.goc + "/crm"; }
+  function cfQuyTac(d) {
+    return d.tr ? "Quy tắc: nói ngắn gọn mỗi bước đang làm gì. Hỏi tôi trước khi tạo dự án mới, trước khi đăng lên mạng và trước khi làm gì có thể tốn tiền (nêu rõ tên sẽ tạo). Chỉ đưa lên các tệp của trang, không đưa `.local`, `.env`, `crm.env` hay bất kỳ khoá nào, không dán khoá hay mật khẩu vào chat."
+      : "Quy tắc: nói ngắn gọn mỗi bước đang làm gì. Hỏi tôi trước khi tạo tài nguyên mới, trước khi đăng lên mạng và trước khi làm gì có thể tốn tiền (nêu rõ tên sẽ tạo). Không dùng lại dữ liệu mẫu `.local/app.sqlite`, không bật DEMO_ADMIN_LOGIN trên bản đưa lên mạng, không dán khoá hay mật khẩu vào chat. Mật khẩu chủ chỉ hiện một lần: nhắc tôi lưu riêng.";
+  }
+  function cfCacBuoc(d) {
+    if (d.tr) {
+      var crm = d.b.crm_public ? String(d.b.crm_public).replace(/\/+$/, "") : "";
+      return "Các bước: (1) kiểm tra các dự án Cloudflare Pages đang có để không trùng tên, hỏi tôi đặt tên dự án; (2) nối form với CRM: trong lead/lead-config.js đặt crmEndpoint là <địa chỉ CRM công khai>/api/consultation-leads" + (crm ? " (CRM của tôi đang có địa chỉ " + crm + ")" : " (CRM của tôi CHƯA có địa chỉ công khai: hỏi tôi, hoặc nhắc tôi đưa CRM lên mạng trước thì form mới gửi được khách)") + ", và thêm địa chỉ trang mới vào leadOrigins trong crm/template/business.json của CRM rồi cập nhật CRM đã lên mạng; (3) đưa thư mục trang lên Cloudflare Pages; (4) đưa tôi link dạng ten.pages.dev, trang bán nằm ở /ban-hang/; (5) gửi thử một form và chỉ báo xong khi thấy khách vào CRM; (6) hỏi tôi có gắn tên miền riêng không.";
+    }
+    return "Các bước theo crm/docs/DEPLOYMENT.md: (1) kiểm tra Node 22.13+ và các tài nguyên Cloudflare đang có để không trùng tên; (2) chỉnh template/business.json (tên, ownerEmail thật, siteUrl) rồi build lại; (3) tạo D1 và R2 mới, trắng, rồi sửa wrangler.jsonc (name, database_name, database_id, bucket_name, ADMIN_EMAIL); (4) nạp database/schema.sql vào D1 mới; (5) tạo owner.sql bằng `npm run owner:sql` rồi nạp vào D1; (6) đặt JWT_SECRET ngẫu nhiên bằng secret store, ENABLE_EXTERNAL_INTEGRATIONS=false; (7) `npm run build` rồi deploy; (8) đưa tôi link, thử đăng nhập, hỏi tôi có gắn tên miền riêng không; (9) khi đã có địa chỉ thật, nối lại Lead Page (crmEndpoint trong lead/lead-config.js, leadOrigins trong business.json) và chatbot, gửi thử một form và chỉ báo xong khi thấy khách vào CRM.";
+  }
+  function cfLenhTisa(d) {
+    if (d.tr) return "Dùng skill tisa-web-crm-lead. Đưa trang Lead/Sale \"" + d.tr.ten + "\" ở thư mục `" + cfThu(d) + "` (thuộc " + noiBo(d.b) + ") lên Cloudflare Pages bằng kết nối Cloudflare tôi đã nối vào TISA BOT, làm theo references/xuat-ban-va-ket-noi.md của skill. Trước khi đưa lên, chạy soat-trang.mjs --dang của skill tisa-thiet-ke-web và sửa hết lỗi. Sau đó kiểm tra các công cụ Cloudflare đang có; nếu thiếu quyền tạo dự án Pages thì nói rõ thiếu quyền nào và hướng dẫn tôi tạo API token đúng quyền (Cloudflare Pages: Edit), đừng đoán. Nếu công cụ không tự đưa tệp lên được thì dùng `npx wrangler pages deploy` với token đó. " + cfCacBuoc(d) + " " + cfQuyTac(d);
+    return "Dùng skill tisa-web-crm-lead. Đưa " + noiBo(d.b) + " lên Cloudflare (Workers + D1 + R2) bằng kết nối Cloudflare tôi đã nối vào TISA BOT. Mã nằm ở `" + cfThu(d) + "`, làm theo crm/docs/DEPLOYMENT.md và references/xuat-ban-va-ket-noi.md của skill. Trước tiên kiểm tra các công cụ Cloudflare đang có; nếu thiếu quyền tạo Workers, D1 hoặc R2 thì nói rõ thiếu quyền nào và hướng dẫn tôi tạo API token đúng quyền, đừng đoán. Nếu công cụ không tự deploy được thì dùng `npx wrangler` với token đó. " + cfCacBuoc(d) + " " + cfQuyTac(d);
+  }
+  function nhoTisa(text, tieu) { giaoWeb(text, tieu || "Quản Trị WEB: đưa web lên Cloudflare"); }
+  /* Cách 2 (V3.02): chưa nối Cloudflare. TISA BOT tự thao tác trên dash.cloudflare.com bằng trình duyệt đã chọn, không cần Claude. */
+  function cfLenhWeb(d) {
+    var chung = "Chưa có kết nối Cloudflare trong TISA BOT nên em tự thao tác trên web: dùng đúng trình duyệt đã chọn cho AI, mở dash.cloudflare.com; chưa đăng nhập thì dừng (wait_user) để tôi tự đăng nhập, không nhập hộ mật khẩu, mã xác minh, thẻ thanh toán. Tạo API token đúng quyền tối thiểu rồi dán thẳng vào thẻ Cloudflare ở trang Kết nối của TISA BOT bằng tisa_browser_do op=dan_vao_tisa (không đọc token ra, không ghi vào chat); nối xong thì đưa lên bằng kết nối đó, nếu công cụ không tự đưa tệp lên được thì dùng `npx wrangler` với token (cần Node 22.13+), nếu máy không chạy lệnh được thì thao tác kéo thả trên trang Cloudflare. ";
+    if (d.tr) return "Dùng skill tisa-web-crm-lead. Đưa trang Lead/Sale Page trong thư mục `" + cfThu(d) + "` (thuộc " + noiBo(d.b) + ") lên Cloudflare Pages bằng tài khoản Cloudflare của chính tôi. Đây là trang tĩnh (HTML, trang bán nằm ở thư mục ban-hang). Trước khi đưa lên, chạy soat-trang.mjs --dang của skill tisa-thiet-ke-web và sửa hết lỗi. " + chung + cfCacBuoc(d) + " " + cfQuyTac(d);
+    return "Dùng skill tisa-web-crm-lead. Đưa Web CRM trong thư mục `" + cfThu(d) + "` lên Cloudflare (Workers + D1 + R2) bằng tài khoản Cloudflare của chính tôi. Đọc crm/docs/DEPLOYMENT.md và README trước. " + chung + cfCacBuoc(d) + " " + cfQuyTac(d);
+  }
+  function cfThuCong(d) {
+    var thu = cfThu(d);
+    if (d.tr) {
+      var crm = d.b.crm_public ? String(d.b.crm_public).replace(/\/+$/, "") : "";
+      return [
+        ["Chuẩn bị", "Có tài khoản Cloudflare (đăng ký miễn phí ở dash.cloudflare.com). Thư mục trang nằm ở đường dẫn dưới đây, trang này chỉ là tệp tĩnh nên không cần cơ sở dữ liệu.", thu],
+        ["Nối form với CRM", "Mở tệp lead-config.js trong thư mục trang, đặt crmEndpoint là địa chỉ CRM công khai cộng thêm /api/consultation-leads" + (crm ? ", ví dụ: " + crm + "/api/consultation-leads" : ".") + " Nếu CRM chưa có địa chỉ công khai thì đưa CRM lên mạng trước (nút Đưa lên Cloudflare ở thẻ Web CRM), không thì form chưa gửi được khách.", ""],
+        ["Cách A: kéo thả, không cần cài gì", "Vào dash.cloudflare.com, mở Workers & Pages, bấm Create, chọn tab Pages, chọn Upload assets. Đặt tên dự án (viết thường, không dấu, ví dụ nha-dep-3t), rồi kéo cả thư mục trang vào khung và bấm Deploy. Xong Cloudflare cho link dạng ten-du-an.pages.dev.", ""],
+        ["Cách B: dùng dòng lệnh (nhanh hơn từ lần sau)", "Cần Node.js. Mở Terminal, chạy lần lượt các lệnh, thay ten-du-an bằng tên dự án của anh chị. Lệnh đầu mở trình duyệt để đăng nhập, bước này phải tự làm.", "cd \"" + thu + "\""],
+        ["", "", "npx wrangler login"],
+        ["", "", "npx wrangler pages project create ten-du-an --production-branch main"],
+        ["", "", "npx wrangler pages deploy . --project-name ten-du-an"],
+        ["Cho phép trang gửi khách về CRM", "Trong CRM, mở template/business.json, thêm địa chỉ trang mới (https://ten-du-an.pages.dev) vào leadOrigins rồi đưa CRM bản cập nhật lên mạng. Thiếu bước này trình duyệt sẽ chặn form.", ""],
+        ["Gắn tên miền riêng (không bắt buộc)", "Vào dự án Pages vừa tạo, mở Custom domains, bấm Set up a custom domain và làm theo.", ""],
+        ["Thử thật", "Mở link, điền thử form bằng số điện thoại của anh chị, rồi vào CRM xem khách có hiện ra không. Trang bán nằm ở đuôi /ban-hang/.", ""]
+      ];
+    }
+    return [
+      ["Chuẩn bị", "Có tài khoản Cloudflare (đăng ký miễn phí ở dash.cloudflare.com), máy có Node.js 22.13 trở lên, và Web CRM đã được cài trên máy này. Cloudflare có thể yêu cầu thêm thẻ thanh toán để dùng R2 (nơi lưu tệp), mức dùng nhẹ thường chưa bị tính phí. Xem bảng giá hiện hành của Cloudflare trước khi bật.", ""],
+      ["Mở Terminal và đi vào thư mục CRM", "Mở Terminal (máy Mac) hoặc PowerShell (Windows), dán lệnh này rồi Enter.", "cd \"" + thu + "\""],
+      ["Đăng nhập Cloudflare", "Trình duyệt sẽ mở ra, bấm Cho phép. Bước này phải tự làm, không nhờ ai nhập thay được.", "npx wrangler login"],
+      ["Điền thông tin doanh nghiệp", "Mở tệp template/business.json, sửa tên, ownerEmail (email thật của anh chị) và siteUrl (địa chỉ sẽ dùng, không có dấu / ở cuối; chưa có thì tạm để trống, sửa sau khi có link).", ""],
+      ["Tạo cơ sở dữ liệu D1 và kho tệp R2", "Sau lệnh đầu, wrangler in ra database_id. Chép database_id đó dán vào tệp wrangler.jsonc, đổi luôn name, database_name, bucket_name và ADMIN_EMAIL (trùng ownerEmail).", "npx wrangler d1 create tisa-crm"],
+      ["", "", "npx wrangler r2 bucket create tisa-crm-files"],
+      ["Nạp cấu trúc dữ liệu (chỉ làm trên cơ sở dữ liệu mới trắng)", "", "npx wrangler d1 execute DB --remote --file database/schema.sql"],
+      ["Tạo tài khoản chủ", "Lệnh đầu in mật khẩu chủ MỘT LẦN, hãy lưu riêng ngay. Lệnh sau nạp tài khoản đó vào cơ sở dữ liệu.", "npm run owner:sql"],
+      ["", "", "npx wrangler d1 execute DB --remote --file .local/owner.sql"],
+      ["Đặt khoá bí mật cho đăng nhập", "Chạy lệnh rồi dán một chuỗi ngẫu nhiên dài từ 32 ký tự trở lên khi được hỏi (ví dụ lấy từ trình tạo mật khẩu).", "npx wrangler secret put JWT_SECRET"],
+      ["Build và đưa lên mạng", "Xong sẽ in ra link dạng ten.ten.workers.dev. Mở link, đăng nhập bằng email chủ và mật khẩu ở bước trên.", "npm run build"],
+      ["", "", "npx wrangler deploy"],
+      ["Gắn tên miền riêng (không bắt buộc)", "Vào dash.cloudflare.com, chọn Workers & Pages, chọn Worker vừa tạo, mở Settings, mục Domains & Routes, bấm Add để gắn tên miền của anh chị.", ""],
+      ["Nối lại form và chatbot", "Quay lại trang này, bấm \"Đặt link công khai\" và dán địa chỉ mới. Sau đó nhờ AI nối lại Lead Page và chatbot với địa chỉ đó, rồi gửi thử một form xem khách có vào CRM không.", ""]
+    ];
+  }
+  function cfVe() {
+    var d = cfDt(); if (!d) return;
+    var b = d.b, trang = !!d.tr, t = CF.tt, n = M.node || {}, cai = !!b.da_giai_nen, ok1, h = "";
+    var mcp = (t && t.mcp) || [], dung = mcp.filter(function (x) { return x.ok && !x.chi_doc; }), chiDoc = mcp.filter(function (x) { return x.chi_doc; });
+    var khongRo = !!(t && t.loi); ok1 = (dung.length > 0 || khongRo) && cai;
+    var ten = trang ? "trang" : "CRM", gocCai = trang ? "Web CRM (chứa trang này)" : "Web CRM";
+    h += '<p class="cf-gt">' + (trang
+        ? "Hiện trang chạy trên máy của anh chị (hoặc qua đường hầm), tắt máy là khách không vào được. Đưa lên Cloudflare Pages thì trang chạy 24/7, tải nhanh, có link ten.pages.dev và gắn được tên miền riêng, bằng tài khoản Cloudflare của chính anh chị. Trang chỉ là tệp tĩnh nên đơn giản hơn CRM. Chọn một trong ba cách dưới đây."
+        : "Hiện CRM chạy trên máy của anh chị, tắt máy là khách không vào được. Đưa lên Cloudflare thì CRM chạy 24/7 bằng tài khoản Cloudflare của chính anh chị. Chọn một trong ba cách dưới đây.") + '</p>' +
+      '<div class="cf-chuan"><span class="' + (cai ? "ok" : "can") + '">' + (cai ? "✓ " + gocCai + " đã cài trên máy" : "⚠ Chưa cài " + gocCai) + '</span>' +
+      (trang ? '<span class="' + (n.du ? "ok" : "") + '" title="Cách kéo thả không cần Node.js">' + (n.du ? "✓ Node.js " + esc(n.ban) : "Node.js chỉ cần cho cách dòng lệnh") + '</span>'
+             : '<span class="' + (n.du ? "ok" : "can") + '">' + (n.du ? "✓ Node.js " + esc(n.ban) : "⚠ Cần Node.js 22.13+") + '</span>') +
+      '<span class="' + (dung.length ? "ok" : "") + '">' + (dung.length ? "✓ Đã nối Cloudflare" : khongRo ? "Chưa kiểm tra được kết nối" : "Chưa nối Cloudflare") + '</span></div>';
+    if (!cai) h += '<div class="cf-canh">Web CRM chưa được cài trên máy này. Đóng hộp này, bấm <b>Cài và chạy</b> ở thẻ Web CRM trước, rồi quay lại đây.</div>';
+    if (trang && !b.crm_public) h += '<div class="cf-canh">Form của trang gửi khách về CRM, nên CRM cần có địa chỉ công khai. Anh chị có thể đưa CRM lên Cloudflare trước (nút ở thẻ Web CRM), hoặc đặt link công khai nếu đã có.</div>';
+
+    /* Cách 1: TISA BOT làm */
+    h += '<div class="cf-cach' + (ok1 ? " goiy" : "") + '"><div class="cf-dau"><span class="cf-so">1</span><b>TISA BOT đưa lên luôn</b>' +
+      (dung.length ? '<span class="cf-nhan ok">● Sẵn sàng · ' + esc(dung[0].ten) + '</span>' : khongRo ? '<span class="cf-nhan">Chưa kiểm tra được</span>' : '<span class="cf-nhan can">Cần nối Cloudflare trước</span>') + '</div>' +
+      '<p class="cf-mo">Dành cho anh chị đã nối <b>MCP hoặc API Cloudflare</b> vào TISA BOT. Bấm nút, TISA BOT soạn sẵn yêu cầu đầy đủ trong Hỏi nhanh. Anh chị xem rồi bấm Gửi, trợ lý ' + (trang ? "tạo dự án Pages, đưa trang lên, nối form về CRM" : "tạo cơ sở dữ liệu, kho tệp, đưa CRM lên và nối lại form, chatbot") + '. Trợ lý hỏi trước khi tạo hay đăng gì.</p>';
+    if (khongRo) h += '<p class="cf-ghi">Chưa quét được kết nối Cloudflare. Anh chị vẫn bấm được: TISA BOT sẽ tự kiểm tra khi làm, nếu chưa có quyền sẽ báo rõ thiếu gì.</p>';
+    else if (!dung.length) {
+      var quyen = trang ? "Cloudflare Pages" : "Workers Scripts, D1 và Workers R2 Storage";
+      h += '<p class="cf-ghi">' + (chiDoc.length
+        ? "Đang có kết nối Cloudflare nhưng chỉ đọc hoặc chỉ là tài liệu (" + esc(chiDoc.map(function (x) { return x.ten; }).join(", ")) + "). Cần kết nối có quyền tạo " + (trang ? "dự án Pages" : "Workers, D1 và R2") + ", thường là API token có quyền Edit cho " + quyen + "."
+        : "Cách nối: vào <b>Kết nối → Kết nối</b>, thêm Cloudflare bằng MCP hoặc API token có quyền Edit cho " + quyen + ".") + '</p>';
+    }
+    h += '<div class="cf-hang"><button class="nut cf-nut" data-cf="tisa"' + (ok1 ? "" : " disabled") + '>🚀 Giao TISA BOT đưa lên Cloudflare</button>' +
+      (dung.length || khongRo ? "" : '<button class="nut phu cf-nut" data-cf="kiem" style="flex:0 1 auto">↻ Tôi nối rồi, kiểm tra lại</button>') + '</div></div>';
+
+    /* Cách 2: TISA BOT thao tác trên web giúp (không cần nối Cloudflare trước) */
+    h += '<div class="cf-cach"><div class="cf-dau"><span class="cf-so">2</span><b>TISA BOT thao tác trên web giúp</b><span class="cf-nhan">Không cần nối trước</span></div>' +
+      '<p class="cf-mo">TISA BOT tự mở trang Cloudflare bằng trình duyệt của TISA BOT, ' + (trang ? "tạo dự án Pages và đưa trang lên" : "tạo cơ sở dữ liệu, kho tệp và đưa CRM lên") + '. Anh chị chỉ cần tự đăng nhập Cloudflare khi được nhờ. TISA BOT không nhập thay mật khẩu, mã xác minh hay thẻ thanh toán.</p>' +
+      '<button class="nut cf-nut" data-cf="web">🤖 Nhờ TISA BOT làm luôn</button></div>';
+
+    /* Cách 3: thủ công */
+    var st = cfThuCong(d), li = "", cuoi = "";
+    st.forEach(function (x) {
+      if (x[0]) { if (cuoi) li += '</li>'; li += '<li><b>' + esc(x[0]) + '</b>' + (x[1] ? esc(x[1]) : "") + (x[2] ? cfLenh(x[2]) : ""); cuoi = "1"; }
+      else if (x[2]) li += cfLenh(x[2]);
+    });
+    if (cuoi) li += '</li>';
+    h += '<div class="cf-cach"><div class="cf-dau"><span class="cf-so">3</span><b>Tự làm thủ công</b><span class="cf-nhan">' + (trang ? "Khoảng 5 phút" : "Khoảng 20 phút") + '</span></div>' +
+      '<p class="cf-mo">' + (trang ? "Có hai cách: kéo thả thư mục lên trang Cloudflare (không cần cài gì), hoặc chạy lệnh. Mỗi lệnh có nút Chép." : "Làm từng bước theo hướng dẫn, mỗi lệnh có nút Chép để dán vào Terminal.") + '</p>' +
+      '<details><summary>Xem hướng dẫn từng bước</summary><ol class="cf-buoc">' + li + '</ol>' +
+      '<p class="cf-ghi">' + (trang ? "Trang trên Cloudflare Pages chỉ là tệp tĩnh, không giữ mật khẩu hay dữ liệu khách. Khách để lại thông tin vẫn đổ về CRM." : "Bản đưa lên mạng không có tài khoản xem thử admin / 123456. Tài khoản chủ do anh chị tạo ở bước 7 và chỉ hiện mật khẩu một lần.") + '</p></details></div>';
+    $("cfThan").innerHTML = h;
+  }
+  async function moCf(id, loai) {
+    CF.id = id; CF.loai = loai || "bo"; CF.tt = null;
+    $("cfTieu").textContent = CF.loai === "trang" ? "☁ Đưa Lead Page & Sale Page lên Cloudflare" : "☁ Đưa Web CRM lên Cloudflare";
+    $("cfThan").innerHTML = '<p class="cf-gt">Đang kiểm tra kết nối Cloudflare…</p>';
+    $("hopCf").showModal();
+    try { CF.tt = await goi("/tisa-web/api/mau/cloudflare"); } catch (e) { CF.tt = { mcp: [], loi: true }; }
+    cfVe();
+  }
+  document.addEventListener("click", async function (e) {
+    var t = e.target.closest("[data-cf]"); if (!t || !M) return;
+    var d = cfDt(); if (!d) return;
+    var k = t.dataset.cf;
+    if (k === "kiem") { t.disabled = true; try { CF.tt = await goi("/tisa-web/api/mau/cloudflare"); } catch (er) {} cfVe(); bao((CF.tt.mcp || []).length ? "Đã kiểm tra lại" : "Chưa thấy kết nối Cloudflare"); return; }
+    if (k === "tisa") { $("hopCf").close(); giaoWeb(cfLenhTisa(d), "Quản Trị WEB: đưa web lên Cloudflare"); return; }
+    if (k === "web") { $("hopCf").close(); nhoTisa(cfLenhWeb(d)); return; }
+  });
+
+  /* ---------- Đổi thông tin đăng nhập admin của Web CRM (V3.34) ---------- */
+  var DN = { id: "" };
+  async function moDN(id) {
+    DN.id = id; var d = $("hopDN");
+    $("dnMk").value = ""; $("dnMk2").value = ""; $("dnLoi").textContent = ""; $("dnCanh").textContent = ""; $("dnMk").type = "password"; $("dnHien").textContent = "Hiện";
+    $("dnEmail").value = ""; $("dnTen").value = "";
+    d.showModal();
+    try {
+      var r = await goi("/tisa-web/api/mau/dang-nhap?bo=" + encodeURIComponent(id));
+      $("dnEmail").value = /\.invalid$/i.test(r.email) ? "" : r.email; $("dnTen").value = r.ten || "";
+      $("dnCanh").textContent = r.mac_dinh ? "Đang dùng mật khẩu xem thử (admin / 123456). Nên đổi trước khi dùng thật." : "";
+      if (r.dang_chay) $("dnCanh").textContent += (r.mac_dinh ? " " : "") + "CRM đang chạy: sẽ tự khởi động lại một lần để áp dụng.";
+    } catch (e) { $("dnLoi").textContent = e.message; }
+    setTimeout(function () { $("dnEmail").focus(); }, 40);
+  }
+  $("dnHien").onclick = function () { var an = $("dnMk").type === "password"; $("dnMk").type = an ? "text" : "password"; $("dnMk2").type = an ? "text" : "password"; $("dnHien").textContent = an ? "Ẩn" : "Hiện"; };
+  $("dnOk").onclick = async function () {
+    var b = this; $("dnLoi").textContent = "";
+    var mk = $("dnMk").value, mk2 = $("dnMk2").value;
+    if (mk !== mk2) { $("dnLoi").textContent = "Hai lần nhập mật khẩu chưa giống nhau."; return; }
+    b.disabled = true; b.textContent = "Đang đổi…";
+    try {
+      var r = await goi("/tisa-web/api/mau/doi-dang-nhap", { bo: DN.id, email: $("dnEmail").value, ten: $("dnTen").value, mat_khau: mk, mat_khau2: mk2 });
+      $("dnMk").value = ""; $("dnMk2").value = "";
+      $("hopDN").close();
+      bao("Đã đổi. Đăng nhập CRM bằng " + r.email + " và mật khẩu mới." + (r.can_khoi_dong_lai ? " Đang khởi động lại CRM…" : ""));
+      if (r.can_khoi_dong_lai) {       // CRM đọc email chủ lúc khởi động: tắt rồi chạy lại một lần để thông tin mới có hiệu lực
+        try { await goi("/tisa-web/api/mau/tat", { bo: DN.id }); await new Promise(function (x) { setTimeout(x, 1500); }); await goi("/tisa-web/api/mau/chay", { bo: DN.id }); }
+        catch (er) { bao("Đã đổi đăng nhập nhưng chưa tự bật lại CRM được: " + er.message + ". Bấm Chạy."); }
+      }
+      nap();
+    } catch (e) { $("dnLoi").textContent = e.message; }
+    b.disabled = false; b.textContent = "Đổi thông tin đăng nhập";
+  };
+  /* ---------- Đặt tên miền / tên web cho một thẻ (V3.34) ---------- */
+  var HW = { loai: "bo", id: "" };
+  function moWeb(loai, id) {
+    HW.loai = loai; HW.id = id;
+    var x = (loai === "bo" ? M.bo : M.trang).find(function (y) { return y.id === id; }) || {}, h = x.hien || {};
+    $("hwTieu").textContent = "🌐 Tên miền và tên web: " + (x.ten || "");
+    $("hwMien").value = h.mien_rieng ? h.link : (loai === "bo" ? (x.crm_public || "") : ""); $("hwTen").value = x.ten || ""; $("hwLoi").textContent = "";
+    $("hopWeb").showModal(); setTimeout(function () { $("hwMien").focus(); }, 40);
+  }
+  $("hwOk").onclick = async function () {
+    var b = this; $("hwLoi").textContent = ""; b.disabled = true;
+    try { await goi("/tisa-web/api/mau/dat-web", { loai: HW.loai, id: HW.id, ten_mien: $("hwMien").value, ten_web: $("hwTen").value }); $("hopWeb").close(); bao("Đã lưu. Đang đọc thông tin web…"); nap(); }
+    catch (e) { $("hwLoi").textContent = e.message; }
+    b.disabled = false;
+  };
+  async function napTuDong() {
+    var o = $("tuDong"); if (!o) return;
+    var d; try { d = await goi("/tisa-web/api/mau/dong-bo"); } catch (e) { o.querySelector("p").textContent = e.message; return; }
+    var z = d.zalo || {};
+    function ct(k, tieu, mo, dis) { return '<label class="cong-tac"><input type="checkbox" data-db="' + k + '"' + (d[k] ? " checked" : "") + (dis ? " disabled" : "") + '><span><b>' + tieu + '</b><small>' + mo + '</small></span></label>'; }
+    var nk = (d.nhat_ky || []).map(function (x) { return '<div class="nk-dong"><span>' + esc(x.ten) + ' · ' + esc(x.kenh) + ' · ' + esc(x.lien_he) + ' · tiềm năng ' + esc(x.diem) + '/4</span><span>' + esc(new Date(x.luc).toLocaleString("vi-VN")) + '</span></div>'; }).join("");
+    o.innerHTML = '<h4>Tự động: chatbot → CRM → Zalo</h4>' +
+      (d.noi ? "" : '<p style="margin:0 0 6px;color:var(--vang);font-size:13px">Chưa nối CRM với TISA BOT. Bấm <b>Nối TISA BOT với CRM này</b> bên dưới trước.</p>') +
+      ct("day_khach", "Tự đẩy khách từ mọi chatbot vào CRM", "Khách nhắn Fanpage, Zalo, Zalo OA… có số điện thoại hoặc email là vào CRM ngay, kèm hội thoại gốc và mức tiềm năng.", !d.noi) +
+      ct("hang_zalo", "Khách Fanpage để lại số thì xếp hàng kết bạn Zalo", "Khách Zalo đã là bạn Zalo nên không cần.", !d.noi) +
+      ct("zalo_tu_chay", "Tự chạy kết bạn và nhắn chăm sóc Zalo mỗi 10 phút", "Chỉ chạy những việc anh chị đã duyệt mẫu và bật: mời kết bạn " + (z.moi_ket_ban ? "<b style=\"color:var(--xanh)\">đang bật</b>" : "<b>đang tắt</b>") + ", thêm khách từ tin nhắn Zalo " + (z.them_tu_inbox ? "<b style=\"color:var(--xanh)\">đang bật</b>" : "<b>đang tắt</b>") + ". Bật bằng nút Lấy số trong CRM, kết bạn Zalo bên dưới.", !d.noi) +
+      '<div class="hang" style="margin-top:6px;justify-content:space-between"><small style="color:var(--mo)">Đã đẩy ' + (d.so_day || 0) + ' khách' + (d.lan_cuoi ? " · quét lúc " + esc(new Date(d.lan_cuoi).toLocaleTimeString("vi-VN")) : "") + (d.loi ? ' · <b style="color:var(--do)">' + esc(d.loi) + '</b>' : "") + '</small>' +
+      (d.noi ? '<button class="nut phu nho" data-mau="db-cu">Đẩy cả khách cũ 30 ngày</button>' : "") + '</div>' +
+      (nk ? '<div style="margin-top:8px">' + nk + '</div>' : "");
+  }
+  document.addEventListener("change", async function (e) {
+    var t = e.target; if (!t.dataset || !t.dataset.db) return;
+    var b = {}; b[t.dataset.db] = t.checked;
+    try { await goi("/tisa-web/api/mau/dong-bo", b); bao(t.checked ? "Đã bật" : "Đã tắt"); } catch (er) { bao(er.message); t.checked = !t.checked; }
+  });
+  function noiBo(b) { return "bộ Web CRM \"" + b.ten + "\" ở thư mục `" + b.goc + "` (CRM cổng " + b.cong_crm + ", Lead Page cổng " + b.cong_lead + ")"; }
+  document.addEventListener("click", async function (e) {
+    var t = e.target.closest("[data-mau],[data-chep-mau]"); if (!t || !M) return;
+    if (t.dataset.chepMau) { navigator.clipboard.writeText(t.dataset.chepMau); bao("Đã chép"); return; }
+    var hanh = t.dataset.mau, id = t.dataset.id;
+    var b = (M.bo || []).find(function (x) { return x.id === id; }), tr = (M.trang || []).find(function (x) { return x.id === id; });
+    try {
+      if (hanh === "cai-goi") { t.disabled = true; await goi("/tisa-web/api/mau/cai-goi", {}); bao("Đã cài gói web mẫu"); return nap(); }
+      if (hanh === "chay") {
+        t.disabled = true;
+        try { await goi("/tisa-web/api/mau/chay", { bo: id }); bao("Đang chạy. Lần đầu mất vài phút để tải thư viện."); }
+        catch (er) { bao(er.message); }
+        return nap();
+      }
+      if (hanh === "tat") { t.disabled = true; await goi("/tisa-web/api/mau/tat", { bo: id }); bao("Đã tắt"); return setTimeout(nap, 800); }
+      if (hanh === "nb-bo" || hanh === "nb-trang") {
+        var trang = hanh === "nb-trang", goc = trang ? tr : b;
+        var ten = await hoi(trang ? "Nhân bản trang" : "Nhân bản bộ Web CRM", "Tên web mới",
+          trang ? "Chép trang này thành một trang mới, form cùng đổ về " + (boCua(goc).ten || "Web CRM") + ". Sau đó nhờ AI sửa nội dung cho sản phẩm khác."
+                : "Chép cả CRM và Lead Page sang thư mục mới, cổng mới, dữ liệu khách trống. Dùng cho một doanh nghiệp hoặc thương hiệu khác.",
+          "");
+        if (ten === null) return;
+        bao("Đang nhân bản…");
+        var r = await goi("/tisa-web/api/mau/nhan-ban", { loai: trang ? "trang" : "bo", id: id, ten: ten });
+        bao("Đã tạo " + ((r.trang && trang) ? r.trang.ten : r.bo.ten));
+        return nap();
+      }
+      if (hanh === "db-cu") {
+        t.disabled = true; t.innerHTML = '<span class="xoay"></span> Đang đẩy…';
+        try { var q = await goi("/tisa-web/api/mau/dong-bo", { quet_ngay: 30 }); var kq = q.ket_qua || {}; bao(kq.error ? kq.error : "Đã đẩy " + (kq.da_day || 0) + " khách vào CRM"); }
+        catch (er) { bao(er.message); }
+        return napTuDong();
+      }
+      if (hanh === "doi-dn") return moDN(id);
+      if (hanh === "dat-web") return moWeb(t.dataset.loai === "trang" ? "trang" : "bo", id);
+      if (hanh === "lam-moi") {
+        t.disabled = true; var vtxt = t.textContent; t.textContent = "Đang đọc…";
+        try { var lm = await goi("/tisa-web/api/mau/lam-moi", { loai: t.dataset.loai === "trang" ? "trang" : "bo", id: id, cong_khai: M.cong_khai || "" }); bao("Đã cập nhật tên web và SEO từ web thật"); }
+        catch (er) { bao(er.message); }
+        return nap();
+      }
+      if (hanh === "crm-url") {
+        var u = await hoi("Link công khai của CRM", "Địa chỉ (ví dụ https://crm.ten-mien-cua-ban.com)",
+          "Điền địa chỉ đã trỏ về CRM này (trong Cloudflare: Zero Trust → Tunnels → tunnel của TISA BOT → Public hostname → Service http://localhost:" + (b ? b.cong_crm : "") + ", mục HTTP Host Header ghi localhost:" + (b ? b.cong_crm : "") + "). Để trống để dùng lại localhost. Lưu ý: CRM mặc định có tài khoản admin / 123456, hãy đổi mật khẩu trước khi cho người ngoài vào.",
+          (b && b.crm_public) || "");
+        if (u === null) return;
+        await goi("/tisa-web/api/mau/crm-public", { bo: id, url: u });
+        bao(u ? "Đã lưu link công khai của CRM" : "Đã bỏ link công khai");
+        return nap();
+      }
+      if (hanh === "cf-tu-dong") {
+        $("hopMau").close(); CF.id = id; CF.loai = tr ? "trang" : "bo";
+        var dd = cfDt(); if (!dd) return;
+        return nhoTisa(cfLenhWeb(dd), tr ? "Kết nối Cloudflare: Lead Page" : "Kết nối Cloudflare: Web CRM");
+      }
+      if (hanh === "cf-mo") { $("hopMau").close(); return moCf(id, tr ? "trang" : "bo"); }
+      if (hanh === "ql-bo") return moQl("bo", id);
+      if (hanh === "ql-trang") return moQl("trang", id);
+      $("hopMau").close();
+      var bb = b || (tr ? boCua(tr) : null);
+      switch (hanh) {
+        case "ai-dung": giaoWeb("Dùng skill tisa-web-crm-lead, dựng lại " + noiBo(b) + " theo doanh nghiệp của tôi. Mã đã có sẵn trên máy, không giải nén lại. Hỏi tôi từng câu một, câu nào tôi chưa có thì giả định để làm demo trước. Sau khi dựng xong chữ, dùng thêm skill tisa-thiet-ke-web: chọn chủ đề hợp ngành (hỏi tôi nếu phân vân), gắn giao diện, nâng bố cục, xử lý ảnh, rồi soát bằng soat-trang.mjs và chụp điện thoại, máy tính. Làm xong cho tôi xem Lead Page, Sale Page và trang quản trị CRM."); break;
+        case "ai-dep":
+          var dd = tr ? bb.goc + "/" + tr.thu_muc_con : b.goc + "/lead";
+          giaoWeb("Dùng skill tisa-thiet-ke-web, làm đẹp và chuyên nghiệp hóa giao diện " + (tr ? "trang Lead/Sale \"" + tr.ten + "\"" : "bộ Web CRM \"" + b.ten + "\"") + ". Thư mục Lead Page, Sale Page, trang cảm ơn: `" + dd + "` (nếu có tệp THIET-KE.md ở đó thì đọc trước). Hỏi tôi tối đa 4 câu, mỗi lượt một câu, có gợi ý và ví dụ, câu nào tôi chưa có thì em tự chọn giúp: khách là ai, muốn tạo cảm giác gì, đã có logo, màu, ảnh thật chưa. Giữ nguyên chữ, giá, cam kết, form và lead-config.js. Gắn chủ đề bằng ap-dung-giao-dien.mjs, nâng bố cục từng khối, xử lý ảnh và biểu tượng, soát bằng soat-trang.mjs, chụp 390px, 768px, 1280px rồi cho tôi xem kèm đoạn ngắn nói đã chọn gì và vì sao. Chưa đăng gì, chưa tốn tiền."); break;
+        case "ai-soat":
+          var ds = tr ? bb.goc + "/" + tr.thu_muc_con : b.goc + "/lead";
+          giaoWeb("Dùng skill tisa-thiet-ke-web, chỉ SOÁT (chưa sửa gì) giao diện " + (tr ? "trang Lead/Sale \"" + tr.ten + "\"" : "bộ Web CRM \"" + b.ten + "\"") + " ở thư mục `" + ds + "`: chạy soat-trang.mjs, chụp 390px, 768px, 1280px và tự xem ảnh, kiểm chữ mẫu còn sót, tốc độ, chia sẻ Zalo, độ dễ đọc. Báo cáo bằng tiếng Việt dễ hiểu: lỗi phải sửa, cảnh báo nên sửa, điều làm tốt, theo thứ tự quan trọng. Hỏi tôi trước khi sửa."); break;
+        case "noi":
+          bao("Đang nối TISA BOT với CRM…");
+          try { var k = await goi("/tisa-web/api/mau/noi", { bo: id }); bao("Đã nối: Hỏi nhanh, Đội Quân AI và chatbot đã dùng được CRM"); }
+          catch (er) { bao(er.message + ((er.data && er.data.loi_tro_ly) ? " (" + er.data.loi_tro_ly + ")" : "")); }
+          nap(); break;
+        case "ai-chatbot": giaoWeb("Nối chatbot vào CRM của " + noiBo(b) + " theo references/noi-chatbot-crm.md của skill tisa-web-crm-lead. TISA BOT đã có khoá và kết nối (gọi crm_chatbot_status để kiểm tra, thiếu thì gọi crm_chatbot_connect với crm_url http://localhost:" + b.cong_crm + "). Hỏi tôi muốn nối chatbot Fanpage hay Zalo nào, xin phép trước khi thêm mục Lưu khách vào CRM vào kịch bản. Chạy thử 1 khách mẫu rồi dọn sạch."); break;
+        case "ai-zalo": giaoWeb("Thiết lập chăm sóc khách qua Zalo cho CRM của " + noiBo(b) + ": gọi crm_setup_status, rồi cùng tôi viết mẫu lời mời kết bạn (tối đa 150 ký tự) và mẫu tin chào, lưu bằng crm_zalo_settings. Mọi tự động giữ TẮT cho tới khi tôi duyệt từng mục. Nói rõ rủi ro Zalo cá nhân bị hạn chế nếu gửi nhiều. Chạy thử bằng số Zalo của chính tôi trước khi bật cho khách."); break;
+        case "ai-mang": giaoWeb("Đưa " + noiBo(b) + " lên mạng theo references/xuat-ban-va-ket-noi.md của skill tisa-web-crm-lead: kiểm tra trước khi có dữ liệu thật (đổi mật khẩu admin, bỏ chữ mẫu và giả định), dùng tài khoản Cloudflare của tôi, trước khi đăng chạy soat-trang.mjs --dang của skill tisa-thiet-ke-web và sửa hết lỗi, hỏi tôi trước khi đăng hay tốn tiền. Xong thì nối lại form và chatbot với địa chỉ thật, gửi thử một lần."); break;
+        case "ai-sua": giaoWeb("Sửa trang Lead/Sale \"" + tr.ten + "\" ở thư mục `" + bb.goc + "/" + tr.thu_muc_con + "` (TISA BOT đang phát trang này ở " + linkTrang(tr, !!M.cong_khai) + "). Giữ nguyên form và tệp lead-config.js. Hỏi tôi muốn sửa gì, viết theo references/cong-thuc-chuyen-doi.md của skill tisa-web-crm-lead, không bịa cảm nhận khách hay số liệu. Sửa xong dùng skill tisa-thiet-ke-web để soát (soat-trang.mjs) và mở trang kiểm tra trên máy tính và điện thoại."); break;
+        case "ai-mien": giaoWeb("Đưa trang Lead/Sale \"" + tr.ten + "\" ở thư mục `" + bb.goc + "/" + tr.thu_muc_con + "` lên Cloudflare Pages và gắn tên miền riêng của tôi (/ts-dua-web-len-mang). Trước khi đưa lên, chạy soat-trang.mjs --dang của skill tisa-thiet-ke-web và sửa hết lỗi. Form phải gửi về CRM: dùng địa chỉ " + (M.cong_khai || "[cần bật Truy cập từ xa]") + "/tisa-web/crm-form/" + bb.id + " cho crmEndpoint. Hỏi tôi tên miền, chỉ tôi từng bản ghi DNS, gửi thử form một lần rồi báo."); break;
+        case "doi-ten-bo": case "doi-ten-trang":
+          var x = hanh === "doi-ten-bo" ? b : tr, moi = await hoi("Đổi tên", "Tên mới", "", x.ten);
+          if (moi) { await goi("/tisa-web/api/mau/doi-ten", { loai: hanh === "doi-ten-bo" ? "bo" : "trang", id: id, ten: moi }); nap(); }
+          break;
+        case "go-bo": case "go-trang":
+          var y = hanh === "go-bo" ? b : tr;
+          if (confirm("Bỏ \"" + y.ten + "\" khỏi danh sách? Thư mục trên máy giữ nguyên, không xoá gì.")) { await goi("/tisa-web/api/mau/go", { loai: hanh === "go-bo" ? "bo" : "trang", id: id }); bao("Đã bỏ khỏi danh sách"); nap(); }
+          break;
+      }
+    } catch (er) { bao(er.message); t.disabled = false; }
+  });
+  nap();
+  setInterval(function () { if (!document.hidden && !document.querySelector("dialog[open]")) nap(); }, 30000);
+})();
+</script>
+</body>
+</html>
