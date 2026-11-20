@@ -957,11 +957,17 @@ def tao_ma_ghep(mat_khau: str) -> dict:
     c = cau_hinh()
     if not _kiem_mat_khau(mat_khau):
         raise ValueError("Mật khẩu bộ não không đúng.")
-    _bao_viec("ma_ghep", 2, "Đang đồng bộ bộ não lên Trạm trước...")
-    try:
-        dong_bo_nao()
-    except Exception as e:  # noqa: BLE001
-        nhat_ky("loi_dong_bo_truoc_ghep", loi=str(e)[:200])
+    # Gói đã mang cả bộ não, đồng bộ trước chỉ để Trạm mới nhất. Đồng bộ đang chạy (lần đầu có thể lâu) thì bỏ qua, không bắt anh chờ.
+    if _khoa.acquire(blocking=False):
+        try:
+            _bao_viec("ma_ghep", 2, "Đang đồng bộ bộ não lên Trạm trước...")
+            _tt["dang_dong_bo"] = True
+            _dong_bo(False, None)
+        except Exception as e:  # noqa: BLE001
+            nhat_ky("loi_dong_bo_truoc_ghep", loi=str(e)[:200])
+        finally:
+            _tt["dang_dong_bo"] = False
+            _khoa.release()
     cm.VIEC.mkdir(parents=True, exist_ok=True)
     tep = cm.VIEC / f"nhan-ban-{time.strftime('%Y%m%d-%H%M%S')}.tisapack"
     _bao_viec("ma_ghep", 5, "Đang đóng gói cấu hình, MCP, API, kênh, tin nhắn...")
