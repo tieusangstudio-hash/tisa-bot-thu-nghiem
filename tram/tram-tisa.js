@@ -181,7 +181,7 @@ async function api(req, env, url) {
   if (p === "/nhip" && M === "POST") {
     const body = await doc();
     const dc = diaChiHopLe(String(body.dia_chi || ""), env);
-    await d1(() => env.DB.prepare("UPDATE may SET lan_cuoi = ?, dia_chi = ?, ban = ?, he = ?, ten = COALESCE(NULLIF(?, ''), ten) WHERE id = ?")
+    await d1(() => env.DB.prepare("UPDATE may SET lan_cuoi = ?, dia_chi = COALESCE(NULLIF(?, ''), dia_chi), ban = ?, he = ?, ten = COALESCE(NULLIF(?, ''), ten) WHERE id = ?")
       .bind(now(), dc, String(body.ban || "").slice(0, 30), String(body.he || "").slice(0, 20), String(body.ten || "").slice(0, 60), may.id).run());
     const seq = await env.DB.prepare("SELECT COALESCE(MAX(seq), 0) AS s FROM tep").first();
     return json({ ok: true, may_id: may.id, vai: await bangVai(env), may: await danhSachMay(env), seq_tep: seq.s, gio: now() });

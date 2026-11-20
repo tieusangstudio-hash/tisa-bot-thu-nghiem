@@ -323,6 +323,18 @@ def ap_vai_khi_khoi_dong() -> dict:
         _ap_cau_hinh_cho()
     except Exception as e:  # noqa: BLE001
         nhat_ky("loi_ap_cau_hinh", loi=str(e)[:200])
+    # Hỏi Trạm NGAY lúc khởi động, trước khi bật kênh nào: máy chủ cũ bị tắt rồi bật lại sau khi máy khác đã tiếp quản không được làm chủ
+    # thêm phút nào (đợi 2 nhịp như lúc đang chạy thì có khoảng 1 phút hai máy cùng trả lời khách). Trạm không trả lời thì giữ vai đã biết.
+    try:
+        d = _goi("POST", "/nhip", {"dia_chi": "", "ban": cm._ban(), "he": _he(), "ten": ten_may()}, cho=6)
+        giu_tram = _giu_theo_tram(d.get("vai") or {}, cau_hinh().get("may_id"))
+        if sorted(giu_tram) != sorted(vt.get("giu") or []):
+            nhat_ky("doi_vai_khi_khoi_dong", tu=vt.get("giu"), thanh=giu_tram)
+            vt["giu"] = giu_tram
+            vt.pop("cho_doi", None)
+        vt["nhiem_ky"] = {k: (v or {}).get("nhiem_ky") for k, v in (d.get("vai") or {}).items()}
+    except Exception as e:  # noqa: BLE001
+        nhat_ky("khoi_dong_khong_hoi_duoc_tram", loi=str(e)[:150])
     giu = set(vt.get("giu") or [])
     # Máy đang CÁCH LY của Chuyển máy (vừa nhận gói thường, chưa bấm chuyển chính thức): giữ vai nào cũng KHÔNG bật lại kênh, lịch, bảng.
     # Ví dụ bản sao chạy thử cạnh máy thật trên cùng một máy: làm chủ Trạm được nhưng không được trả lời khách trùng máy thật.
