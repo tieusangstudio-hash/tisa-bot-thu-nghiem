@@ -35,16 +35,18 @@
   var IC_GIAO = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 7h11l-3-3M17 17H6l3 3"/></svg>';
 
   var CSS = [
-    ".tml-nhan{display:inline-flex;align-items:center;gap:7px;margin-left:10px;height:30px;padding:0 11px 0 9px;border-radius:999px;font:600 12.5px/1 inherit;text-decoration:none;white-space:nowrap;max-width:320px;cursor:pointer;border:1px solid transparent;flex:0 1 auto;min-width:0}",
-    ".tml-nhan svg{width:15px;height:15px;flex:none}.tml-nhan b{font-weight:700;overflow:hidden;text-overflow:ellipsis;min-width:0}",
-    ".tml-nhan .tml-vai{font:700 11px/1 inherit;padding:4px 7px;border-radius:999px;flex:none}",
-    ".tml-nhan.chu{background:rgba(242,106,33,.10);border-color:rgba(242,106,33,.35);color:#c2410c}.tml-nhan.chu .tml-vai{background:#F26A21;color:#fff}",
-    ".tml-nhan.phu{background:rgba(37,99,235,.08);border-color:rgba(37,99,235,.30);color:#1d4ed8}.tml-nhan.phu .tml-vai{background:#2563eb;color:#fff}",
-    ".tml-nhan.xa{animation:tmlNhay 1.2s ease 2}@keyframes tmlNhay{50%{box-shadow:0 0 0 4px rgba(242,106,33,.25)}}",
-    "@media (prefers-color-scheme:dark){.tml-nhan.chu{color:#fdba74}.tml-nhan.phu{color:#93c5fd}}",
-    ":root[data-theme=dark] .tml-nhan.chu{color:#fdba74}:root[data-theme=dark] .tml-nhan.phu{color:#93c5fd}",
-    "@media (max-width:760px){.tml-nhan{max-width:150px;padding:0 8px;gap:5px;margin-left:6px}.tml-nhan .tml-vai{padding:3px 5px;font-size:10px}}",
-    "@media (max-width:420px){.tml-nhan b{display:none}}",
+    // Nhãn máy (21/11 chủ nhờ làm gọn, đẹp hơn): cùng khuôn với nút chọn bộ não bên cạnh (cao 30, bo 8, nền --bg3), chấm màu vai + tên + chip vai nhỏ.
+    ".tml-nhan{display:inline-flex;align-items:center;gap:7px;margin-left:8px;height:30px;padding:0 5px 0 10px;border-radius:8px;border:1px solid var(--border,rgba(23,47,114,.12));background:var(--bg3,#f4f6fb);color:var(--text,#172033);font:inherit;font-size:13px;text-decoration:none;white-space:nowrap;max-width:280px;min-width:0;flex:0 1 auto;cursor:pointer;transition:border-color .15s}",
+    ".tml-nhan:hover{border-color:var(--accent,#F26A21)}.tml-nhan:focus-visible{outline:2px solid var(--accent,#F26A21);outline-offset:2px}",
+    ".tml-nhan .tml-cham{width:7px;height:7px;border-radius:50%;flex:none;background:#94a3b8}",
+    ".tml-nhan b{font-weight:600;overflow:hidden;text-overflow:ellipsis;min-width:0;max-width:170px}",
+    ".tml-nhan .tml-vai{flex:none;font-size:11px;font-weight:650;line-height:1;padding:5px 7px;border-radius:6px;letter-spacing:.1px}",
+    ".tml-nhan.chu .tml-cham{background:#F26A21;box-shadow:0 0 0 3px rgba(242,106,33,.18)}.tml-nhan.chu .tml-vai{background:rgba(242,106,33,.12);color:#c2410c}",
+    ".tml-nhan.phu .tml-cham{background:#3b82f6;box-shadow:0 0 0 3px rgba(59,130,246,.18)}.tml-nhan.phu .tml-vai{background:rgba(59,130,246,.11);color:#1d4ed8}",
+    "@media (prefers-color-scheme:dark){:root:not([data-theme=light]) .tml-nhan.chu .tml-vai{color:#fdba74}:root:not([data-theme=light]) .tml-nhan.phu .tml-vai{color:#93c5fd}}",
+    ":root[data-theme=dark] .tml-nhan.chu .tml-vai{color:#fdba74}:root[data-theme=dark] .tml-nhan.phu .tml-vai{color:#93c5fd}",
+    "@media (max-width:760px){.tml-nhan{margin-left:6px;padding:0 4px 0 8px;gap:6px}.tml-nhan b{max-width:96px}.tml-nhan .tml-vai{padding:4px 5px;font-size:10.5px}}",
+    "@media (max-width:420px){.tml-nhan b{display:none}.tml-nhan{padding:0 4px 0 8px}}",
     // Không dùng lớp cp-plus: tisa-trinh-duyet.js chèn nút Trình duyệt sau MỌI nút cp-plus (thấy 21/11: hai nút Trình duyệt).
     ".tml-pill{height:32px;max-width:220px;padding:0 11px;gap:6px;display:inline-flex;align-items:center;white-space:nowrap;font:600 12.5px/1 inherit;border-radius:999px;flex:0 1 auto;min-width:0;cursor:pointer;background:transparent;color:var(--text2,#5b6478);border:1px solid var(--border,rgba(23,47,114,.14))}",
     ".tml-pill:hover{background:var(--surface-2,rgba(23,47,114,.06))}.tml-pill:focus-visible{outline:2px solid #F26A21;outline-offset:2px}",
@@ -113,7 +115,7 @@
       host.appendChild(el);
     }
     var m = mayNay(), chu = !!m.la_chu;
-    var h = IC_MAY + "<b>" + esc(m.ten || "Máy này") + "</b><span class='tml-vai'>" + (chu ? "Máy chủ" : "Máy phụ") + "</span>";
+    var h = "<span class='tml-cham' aria-hidden='true'></span><b>" + esc(m.ten || "Máy này") + "</b><span class='tml-vai'>" + (chu ? "Máy chủ" : "Máy phụ") + "</span>";
     if (el.getAttribute("data-k") !== h) { el.innerHTML = h; el.setAttribute("data-k", h); }
     el.className = "tml-nhan " + (chu ? "chu" : "phu");
     el.title = "Trang này đang chạy trên máy \"" + (m.ten || "") + "\"" + (m.may_that && m.may_that !== m.ten ? " (" + m.may_that + ")" : "") +

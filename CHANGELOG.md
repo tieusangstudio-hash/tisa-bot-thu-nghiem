@@ -6,6 +6,8 @@ Lịch sử phiên bản TISA BOT. Bản mới nhất ở trên cùng. Xem ngay 
 
 Định dạng: mỗi phiên bản là một khối `## [x.y.z] - ngày`, bên dưới nhóm thay đổi theo `### Thêm mới / Sửa lỗi / Cải thiện / Bảo mật`.
 
+## [0.617.11] - 2026-11-21
+
 ## [0.617.10] - 2026-11-21
 
 ## [0.617.9] - 2026-11-21
