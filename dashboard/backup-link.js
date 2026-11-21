@@ -115,7 +115,7 @@
     on("change", function () { openPicker(gh, linkTo); });
     on("swap", async function () { say(tw("bl.linking")); say(await linkTo(name)); });
     on("unlink", async function () {
-      if (!(await window.TISAHoi(tw("bl.unlink_q")))) return;
+      if (!window.confirm(tw("bl.unlink_q"))) return;
       await api("/backup/github/unlink", {});
       if (opts.onChange) opts.onChange();
     });

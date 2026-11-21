@@ -156,7 +156,7 @@
     if (open) open.onclick = function () { openForm(st); };
     var off = cardHost.querySelector("[data-gh-off]");
     if (off) off.onclick = async function () {
-      if (!(await window.TISAHoi(tw("gh.disconnect_q")))) return;
+      if (!window.confirm(tw("gh.disconnect_q"))) return;
       await api("/github/disconnect", {});
       loadCard();
     };
@@ -240,7 +240,7 @@
           b.onclick = async function () {
             var name = b.getAttribute("data-gh-remove");
             sh.close();
-            if (!(await window.TISAHoi(tw("gh.remove_q", { name: name })))) return;
+            if (!window.confirm(tw("gh.remove_q", { name: name }))) return;
             var msg = m.querySelector("[data-gh-msg]");
             if (msg) msg.textContent = "";
             d.disabled = true;

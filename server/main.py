@@ -10241,7 +10241,7 @@ def _log_agent_run(brain, slug, task, out):
         with open(d / f"{now.strftime('%Y-%m-%d')}.md", "a", encoding="utf-8") as fh:
             # Cắt CẢ task: prompt bước workflow sau vòng retry có thể ôm cả kết quả cũ
             # (out[:8000] nối vào), không cắt là một lượt chạy phình cả chục KB nhật ký.
-            fh.write(f"\n## {now.strftime('%H:%M')}\n**Task:** {_redact_secrets(task[:2000])}\n\n**Kết quả:** {_redact_secrets(out[:1500])}\n")
+            fh.write(f"\n## {now.strftime('%H:%M')}\n**Task:** {task[:2000]}\n\n**Kết quả:** {out[:1500]}\n")
     except Exception:
         pass
 
@@ -17904,32 +17904,6 @@ async def browse_starts(brain: str = Query("", description="Brain đang mở; r�
         return {"diem": ds}
 
     return await asyncio.to_thread(_quet)
-
-
-@app.post("/agents/nhan-ban")
-async def agent_nhan_ban(slug: str = Form(...), ten: str = Form(...), brain: str = Form("brain")):
-    import tisa_nhan_ban
-
-    def _lam():
-        with _AGENT_META_LOCK:
-            kq = tisa_nhan_ban.nhan_ban(_agents_dir(brain), slug, ten)
-        if kq.get("ok"):
-            # Bài học và luật chủ dặn cũng là phần "linh hồn" của bản gốc.
-            nho = _brain_memory_dir(brain) / "agents" / slug / "MEMORY.md"
-            if nho.is_file():
-                moi = _brain_memory_dir(brain) / "agents" / kq["slug"] / "MEMORY.md"
-                moi.parent.mkdir(parents=True, exist_ok=True)
-                moi.write_text(nho.read_text(encoding="utf-8"), encoding="utf-8")
-        return kq
-
-    kq = await asyncio.to_thread(_lam)
-    return JSONResponse(kq, status_code=200 if kq.get("ok") else 400)
-
-
-@app.get("/browse/goi-y")
-async def browse_goi_y():
-    import tisa_chon_thu_muc
-    return await asyncio.to_thread(tisa_chon_thu_muc.goi_y)
 
 
 @app.get("/path/exists")
@@ -29821,10 +29795,9 @@ async def messenger_webhook(request: Request):
 # The Connections page card drives these. `messenger_setup` does the Graph calls; this layer
 # stores the account and restarts the bots that use it. No response ever carries a token.
 def _ms_webhook_url(request: Request) -> str:
-    import tisa_meta_https
-    base = tisa_meta_https.https_base(web_security.external_base(
+    base = web_security.external_base(
         request.url.scheme, request.url.netloc,
-        request.headers.get("x-forwarded-proto", ""), request.headers.get("x-forwarded-host", "")))
+        request.headers.get("x-forwarded-proto", ""), request.headers.get("x-forwarded-host", ""))
     return base + "/messenger/webhook"
 
 
@@ -29925,10 +29898,9 @@ def _ms_with_bot_row(res: dict, aid: str, page_id: str) -> dict:
 # /messenger/oauth/result until the Pages arrive, then posts the ticked Pages to /finish. The user
 # token stays inside `messenger_oauth`; nothing here returns a token.
 def _ms_base(request: Request) -> str:
-    import tisa_meta_https
-    return tisa_meta_https.https_base(web_security.external_base(
+    return web_security.external_base(
         request.url.scheme, request.url.netloc,
-        request.headers.get("x-forwarded-proto", ""), request.headers.get("x-forwarded-host", "")))
+        request.headers.get("x-forwarded-proto", ""), request.headers.get("x-forwarded-host", ""))
 
 
 @app.post("/messenger/oauth/start")

@@ -1732,7 +1732,7 @@
       opts || {}, tisaSchedule(rule, date || today(), time || "08:00"));
     var r = await postJSON("/reminders", body);
     if (r && r.ok === false && r.can_force) {
-      if (!(await window.TISAHoi(r.error + "\n\n" + tw("nv.f.force")))) return null;
+      if (!window.confirm(r.error + "\n\n" + tw("nv.f.force"))) return null;
       body.allow_no_channel = true;
       r = await postJSON("/reminders", body);
     }
@@ -1869,7 +1869,7 @@
       case "totisa": case "m-totisa": return giveToTISA(it);
       case "m-tome": return takeFromTISA(it);
       case "grant":
-        if (!(await window.TISAHoi(tw("kanban.confirm_grant")))) return;
+        if (!window.confirm(tw("kanban.confirm_grant"))) return;
         return act(postForm("/kanban/task/grant", { brain: b, id: it.ref }), tw("nv.ok.granted"));
       case "approve": return act(postForm("/kanban/task/move", { brain: b, id: it.ref, status: "done" }), tw("nv.ok.approved"));
       case "accfix": return act(postForm("/kanban/task/acceptance", { brain: b, id: it.ref, decision: "fix" }), tw("nv.ok.accfix"));

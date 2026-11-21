@@ -220,7 +220,7 @@
     }
 
     box.querySelector("#rpForget").onclick = async function () {
-      if (!(await window.TISAHoi(tt("rp.forget_confirm")))) return;
+      if (!window.confirm(tt("rp.forget_confirm"))) return;
       try { await api(base + "/forget", { method: "POST", body: fd({}) }); await tai(); }
       catch (e) { window.alert(e.message); }
     };
