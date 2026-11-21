@@ -222,7 +222,7 @@ details[open] summary { margin-bottom: 8px; }
 
     <div class="the">
       <h2>Thêm máy</h2>
-      <p class="mo">Làm theo 3 bước. Bước 1 ở máy này, bước 2 và 3 ở máy mới.</p>
+      <p class="mo">Làm theo 3 bước. Bước 1 ở máy này, bước 2 và 3 ở máy mới. Muốn AI điều khiển máy tính anh đang ngồi thì máy đó phải được thêm vào theo cách này: mở trang từ máy khác chỉ là xem, AI vẫn làm trên máy chạy TISA BOT.</p>
       <div class="buoc"><div class="so">1</div><div>
         <h3>Tạo dòng ghép <span class="noi">ở máy này</span></h3>
         <p class="mo">Máy này đóng gói cấu hình, MCP, API, kết nối, tin nhắn và bộ não rồi gửi lên Trạm (không gồm video, ảnh lớn, dữ liệu làm dở). Mất khoảng 3 đến 5 phút.</p>
@@ -410,6 +410,8 @@ details[open] summary { margin-bottom: 8px; }
     if (vn.lop === "chu") kiem.push(S.dia_chi ? ["", "Tên miền đang trỏ về máy này"] : ["xau", "Máy chưa có đường ra ngoài, tên miền tạm chưa vào được (đường hầm đang khởi động)"]);
     var tat = (S.may || []).filter(function (m) { return !m.dang_bat && m.id !== S.may_id; });
     if (tat.length) kiem.push(["xau", tat.map(function (m) { return m.ten; }).join(", ") + " đang tắt, lần cuối thấy " + truoc(tat[0].lan_cuoi)]);
+    kiem.unshift(["", "Trang này là TISA BOT của máy \"" + S.ten_may + "\"" + (S.may_that && S.may_that !== S.ten_may ? " (" + S.may_that + ")" : "") +
+      ". Mọi việc AI làm ở đây (điều khiển chuột, mở ứng dụng, dựng video) chạy trên máy đó, kể cả khi anh mở trang từ máy khác hay điện thoại."]);
     $("dsKiem").innerHTML = kiem.map(function (k) { return '<li class="' + k[0] + '">' + esc(k[1]) + "</li>"; }).join("");
 
     $("cacMay").innerHTML = (S.may || []).map(function (m) {

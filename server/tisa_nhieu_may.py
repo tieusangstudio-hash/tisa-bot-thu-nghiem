@@ -1210,7 +1210,20 @@ def tinh_trang() -> dict:
             "dia_chi": dia_chi_may(), "dong_bo": _tt.get("dong_bo") or db.get("so") or {}, "luc_dong_bo": db.get("luc"),
             "so_tep_dong_bo": len(db.get("goc") or {}), "dang_dong_bo": _tt.get("dang_dong_bo"),
             "viec": {k: v for k, v in (_viec.get("v") or {}).items()}, "ten_vai": TEN_VAI, "link_token": _link_token(),
-            "lenh_cai": _lenh_cai(), "dong_bo_giay": DONG_BO_GIAY, "tep_toi_da_mb": TEP_TOI_DA // (1024 * 1024)}
+            "lenh_cai": _lenh_cai(), "dong_bo_giay": DONG_BO_GIAY, "tep_toi_da_mb": TEP_TOI_DA // (1024 * 1024),
+            "may_that": _ten_may_he()}
+
+
+def _ten_may_he() -> str:
+    """Tên máy theo hệ điều hành (Mac: Tên máy tính ở Cài đặt), để trang nói rõ AI đang điều khiển máy nào."""
+    if sys.platform == "darwin":
+        try:
+            t = subprocess.run(["scutil", "--get", "ComputerName"], capture_output=True, text=True, timeout=5).stdout.strip()
+            if t:
+                return t
+        except Exception:  # noqa: BLE001
+            pass
+    return platform.node() or ""
 
 
 def _lenh_cai() -> dict:

@@ -1236,7 +1236,7 @@ def _phong_to(a: dict) -> str:
 
 def _lam(p, op: str, a: dict) -> str:
     if op == "status":
-        return json.dumps(trang_thai(), ensure_ascii=False)
+        return json.dumps(dict(trang_thai(), may_dang_dieu_khien=_MAY_NAY), ensure_ascii=False)
     if op == "permissions":
         q = p.quyen()
         return "Hệ điều hành: %s. Quyền điều khiển (Trợ năng): %s. Quyền ghi màn hình: %s. Chương trình cần cấp quyền: %s" % (
@@ -1594,9 +1594,43 @@ def trang_thai() -> dict:
     return d
 
 
-_MO_TA_NHIN = ("Nhìn máy tính của anh (macOS hoặc Windows). op=screenshot chụp màn hình (ảnh được gửi kèm để nhìn, biết bấm đâu; nhanh, khoảng 0,1 giây; thêm ung_dung=<tên> để chụp riêng một cửa sổ kể cả khi bị che); op=zoom x y x2 y2 phóng to một vùng của ảnh gần nhất để đọc chữ nhỏ; op=windows liệt kê ứng dụng đang mở; op=front ứng dụng đang ở trước; "
+def _ten_may_nay() -> str:
+    """Tên máy đang chạy TISA BOT này (tên ở Nhiều máy nếu đã nối, kèm tên máy của hệ điều hành)."""
+    ten_he = ""
+    try:
+        if sys.platform == "darwin":
+            ten_he = subprocess.run(["scutil", "--get", "ComputerName"], capture_output=True, text=True, timeout=5).stdout.strip()
+    except Exception:  # noqa: BLE001
+        pass
+    if not ten_he:
+        import platform
+        ten_he = platform.node() or "máy này"
+    try:
+        import tisa_nhieu_may as _NM
+        if _NM.dang_bat():
+            ten_nm = _NM.ten_may()
+            if ten_nm and ten_nm != ten_he:
+                return "%s, máy %s" % (ten_nm, ten_he)
+    except Exception:  # noqa: BLE001
+        pass
+    return ten_he
+
+
+# Nhiều máy (21/11/2026): chủ mở TISA BOT 2 qua tên miền từ máy tính mới, nhờ "làm trên máy này" nhưng công cụ điều khiển
+# MacBook đang chạy TISA BOT (đang khóa). Công cụ chỉ điều khiển được máy đang chạy TISA BOT, nên mô tả phải nói rõ máy nào.
+try:
+    _MAY_NAY = _ten_may_nay()
+except Exception:  # noqa: BLE001
+    _MAY_NAY = "máy này"
+_MAY_NAO = ("CHỈ ĐIỀU KHIỂN ĐƯỢC MÁY ĐANG CHẠY TISA BOT NÀY: \"%s\". Anh có thể đang mở TISA BOT từ máy tính khác hoặc điện thoại qua tên miền; "
+            "máy anh đang ngồi chỉ là màn hình xem, AI không điều khiển được máy đó. Khi anh nói \"máy này\", \"máy anh đang mở\", hoặc ảnh chụp không giống màn hình anh tả, "
+            "hoặc máy báo đang khóa trong khi anh nói máy đang mở: nói rõ ngay em đang điều khiển máy \"%s\", KHÔNG cố mở khóa hay làm tiếp trên máy đó khi anh chưa đồng ý. "
+            "Muốn AI làm trên máy anh đang ngồi: cài TISA BOT lên máy đó rồi ghép ở Hệ thống → Nhiều máy → Thêm máy, xong mở TISA BOT của chính máy đó "
+            "(http://127.0.0.1:<cổng> trên máy đó, hoặc nút Mở máy này ở trang Nhiều máy). ") % (_MAY_NAY, _MAY_NAY)
+
+_MO_TA_NHIN = (_MAY_NAO + "Nhìn máy tính của anh (macOS hoặc Windows).op=screenshot chụp màn hình (ảnh được gửi kèm để nhìn, biết bấm đâu; nhanh, khoảng 0,1 giây; thêm ung_dung=<tên> để chụp riêng một cửa sổ kể cả khi bị che); op=zoom x y x2 y2 phóng to một vùng của ảnh gần nhất để đọc chữ nhỏ; op=windows liệt kê ứng dụng đang mở; op=front ứng dụng đang ở trước; "
                "op=permissions kiểm tra quyền điều khiển; op=status; op=kiem_chen (có thứ khác đang điều khiển Chrome không); op=chup_cua_so ung_dung=<tên> hoặc x y w h, mo_ta=<tên thư mục> (chụp đúng cửa sổ, lưu vào brain 04-ket-qua); op=quay_trang_thai; op=huong_dan_quyen (quyền nào còn thiếu + hướng dẫn TỪNG BƯỚC để đọc lại cho người dùng). Thiếu quyền thì KHÔNG dừng ở \"em không làm được\": hướng dẫn họ bật. Làm theo kỹ năng dq-dieu-khien-may.")
-_MO_TA_LAM = ("Điều khiển máy tính của anh như người thật. op=click|double_click|right_click x y (toạ độ theo ảnh chụp); op=move x y; op=drag x y x2 y2; op=scroll dy (dương = xuống); "
+_MO_TA_LAM = (_MAY_NAO + "Điều khiển máy tính của anh như người thật.op=click|double_click|right_click x y (toạ độ theo ảnh chụp); op=move x y; op=drag x y x2 y2; op=scroll dy (dương = xuống); "
               "op=type text (gõ được tiếng Việt; thêm kieu=phim để gõ từng phím thật cho máy tính bỏ túi, trò chơi); op=key key (ví dụ cmd+space, enter, ctrl+c, alt+tab); op=open_app name; op=open_path path (mở thư mục hoặc tệp); op=focus_app name; "
               "op=quit_app name; op=wait ms; op=cai_dat_quyen (macOS chưa cấp quyền: tự mở Cài đặt rồi chờ anh bật công tắc); "
               "op=mo_chrome [ho_so] url=... [tab_moi=true] (mở trang trong hồ sơ Chrome anh ĐÃ CHỌN; bỏ trống ho_so là đúng hồ sơ đó; xin hồ sơ khác bị KHOA_HO_SO, không tự mở hồ sơ khác); op=chon_chrome [ho_so] (xem hồ sơ đã chọn; đổi thì anh phải bấm Duyệt); "
