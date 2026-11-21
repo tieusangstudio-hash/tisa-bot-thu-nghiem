@@ -334,7 +334,7 @@ if (os.getenv("TISA_DEV_CORS", "") or "").strip().lower() in ("1", "true", "yes"
 # 2026-11-05 audit: "/static" and "/health" had no trailing slash, the same trap as "/s" above. "/health" opened
 # /health/loop (stack traces, server paths, restart history) and would open any later /health* or /static* route.
 # The probe stays public as an exact path; the static mount keeps its prefix WITH the slash.
-_AUTH_PUBLIC_PREFIX = ("/static/", "/s/", "/hooks/", "/nv/", "/tisa-web/thu/", "/tisa-web/trang/", "/tisa-web/crm-form/")
+_AUTH_PUBLIC_PREFIX = ("/static/", "/s/", "/hooks/", "/nv/", "/tisa-web/thu/", "/tisa-web/trang/", "/tisa-web/crm-form/", "/tisa-nhieu-may/nhan/")
 # /brand-logo: hiện trên màn đăng nhập (trước session). /tls-check: Caddy gọi (không đăng nhập được).
 _AUTH_PUBLIC_EXACT = ("/", "/favicon.ico", "/health", "/auth/status", "/auth/login", "/auth/setup", "/auth/quen/trang-thai", "/auth/quen/gui", "/auth/quen/doi",
                       # /robots.txt (2026-11-09): crawlers must read it with no session, see bot_shield.py.
@@ -35060,6 +35060,14 @@ try:
     tisa_nhieu_may.gan(app)
 except Exception as e:      # noqa: BLE001
     print(f"[tisa_nhieu_may] không bật được: {type(e).__name__}: {e}", file=sys.stderr)
+
+
+# ---- Bộ TISA (bản thử): giao việc cho máy khác, nút "Máy làm" ở ô chat (server/tisa_giao_may.py). /tisa-nhieu-may/nhan/ tự kiểm chữ ký máy ----
+try:
+    import tisa_giao_may
+    tisa_giao_may.gan(app)
+except Exception as e:      # noqa: BLE001
+    print(f"[tisa_giao_may] không bật được: {type(e).__name__}: {e}", file=sys.stderr)
 
 if __name__ == "__main__":
     import uvicorn
