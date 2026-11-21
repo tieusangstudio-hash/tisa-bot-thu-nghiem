@@ -130,6 +130,8 @@ def _load_now():
     # bẻ hướng được kết nối đang đăng nhập thật - xem `packs._kiem_connector`.
     for cid, con in (_lop_goi() or {}).items():
         by_id.setdefault(cid, con)
+    import tisa_quyen_qc
+    tisa_quyen_qc.sua_the(by_id)
     _cache.update(sig=sig, by_id=by_id, path=str(CATALOG_PATH))
     return by_id
 
@@ -546,6 +548,10 @@ def classify(connector, tool, args=None):
     args=None (lúc tools/list) → tool đa hành động tạm coi 'read' để còn LIỆT KÊ được;
     chặn thật diễn ra lúc tools/call khi đã có args."""
     c = connector or {}
+    import tisa_quyen_qc
+    qc = tisa_quyen_qc.loai(c.get("id"), tool)
+    if qc:
+        return qc
     meta = c.get("tool_meta") or {}
     t = (tool or "").lower()
 

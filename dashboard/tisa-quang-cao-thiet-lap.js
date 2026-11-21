@@ -716,7 +716,7 @@
       if (t.closest("[data-hs-luu]")) { var nm = (goc.querySelector("#hsTen").value || "").trim(), tt0 = goc.querySelector("#hsTt"); if (!nm) { if (tt0) tt0.textContent = "Nhập tên trước nhé."; return; }
         var jh = await api("/tisa-quang-cao/api/ho-so", { nen: S.nen, ten: nm, link: goc.querySelector("#hsLink").value, giong_van: goc.querySelector("#hsGiong").value });
         if (!jh.ok) { if (tt0) tt0.textContent = jh.error || "Không lưu được."; return; } HO_SO.unshift(jh.ho_so); S.ho_so_id = jh.ho_so.id; ThemHs = false; ve(); return; }
-      if ((x = t.closest("[data-hs-xoa]"))) { if (!confirm("Xoá khỏi danh sách đã lưu? (Không ảnh hưởng gì tới trang thật.)")) return; await api("/tisa-quang-cao/api/ho-so/" + x.dataset.hsXoa + "/xoa", {}); HO_SO = HO_SO.filter(function (h) { return h.id !== x.dataset.hsXoa; }); S.ho_so_id = ""; ve(); return; }
+      if ((x = t.closest("[data-hs-xoa]"))) { if (!(await window.TISAHoi("Xoá khỏi danh sách đã lưu? (Không ảnh hưởng gì tới trang thật.)"))) return; await api("/tisa-quang-cao/api/ho-so/" + x.dataset.hsXoa + "/xoa", {}); HO_SO = HO_SO.filter(function (h) { return h.id !== x.dataset.hsXoa; }); S.ho_so_id = ""; ve(); return; }
       if ((x = t.closest("[data-ns]"))) { S.ngan_sach_ngay = x.dataset.ns; ve(); return; }
       if ((x = t.closest("[data-chon]"))) { goc.querySelector('[data-file="' + x.dataset.chon + '"]').click(); return; }
       if ((x = t.closest("[data-bo]"))) { var id = x.dataset.bo; S.media = S.media.filter(function (y) { return y !== id; }); S.file_khach = S.file_khach.filter(function (y) { return y !== id; }); S.slotMedia = {}; await api("/tisa-quang-cao/api/tep/" + id + "/xoa", {}); delete TEP[id]; DA_TAI = DA_TAI.filter(function (y) { return y.id !== id; }); ve(); return; }

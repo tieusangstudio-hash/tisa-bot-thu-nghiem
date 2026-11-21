@@ -333,6 +333,7 @@ class TISAGraph {
             const s = (l.source && l.source.id) || l.source, t = (l.target && l.target.id) || l.target;
             return (s === self._hoverId || t === self._hoverId) ? INK.linkOn : INK.linkOff;
           }
+          if (self._catFilter) return window.TISADao.trongCum(l, self._catFilter) ? INK.linkOn : INK.linkOff;
           return INK.linkIdle;                      // dây nối mờ hơn (đỡ đậm)
         })
         .linkWidth(l => {
@@ -358,8 +359,9 @@ class TISAGraph {
         })
         .onNodeClick(n => { if (window.onGraphNodeClick) window.onGraphNodeClick(n); })   // chỉ mở note, KHÔNG lia camera
         .onNodeDrag(() => { self._engineOn = true; })                                     // a drag reheats the physics
-        .onNodeDragEnd(n => { n.fx = null; n.fy = null; self._engineOn = true; self._syncLoop(); })   // thả kéo → node tự trôi về
-        .onBackgroundClick(() => { self._catFilter = null; })                            // KHÔNG recenter → bấm được node viền
+        .onNodeDragEnd(n => { window.TISADao.giu(n); self._engineOn = true; self._syncLoop(); })
+        .onNodeRightClick(n => window.TISADao.tha(n))   // thả kéo → node tự trôi về
+        .onBackgroundClick(() => { if (self._catFilter) self.spotlightCategory(null); })                            // KHÔNG recenter → bấm được node viền
         .minZoom(0.05).maxZoom(3)                                                         // min nâng lên = mức fit sau khi lắng
         .onEngineTick(() => { self._ticks = (self._ticks || 0) + 1; self._runTicks = (self._runTicks || 0) + 1; })
         .onEngineStop(() => {
@@ -402,6 +404,8 @@ class TISAGraph {
     this._t0 = remembered === "still" ? 0 : (typeof performance !== "undefined" ? performance.now() : Date.now());
     try { this.graph.minZoom(0.05); } catch (e) {}   // mở lại giới hạn để lần fit mới không bị kẹp
     this._physicsFor(nodes.length, remembered);
+    window.TISADao.khoiPhuc(nodes);
+    if (this._catFilter && !nodes.some(n => n.__cat === this._catFilter)) this._catFilter = null;
     this.graph.graphData({ nodes, links });
     this.resize();
     // The picture is already the settled one: frame it now instead of after the physics has cooled down.
@@ -470,7 +474,7 @@ class TISAGraph {
       : (1 + 0.12 * this.level);
     let born = 1;
     if (n.__born) { const age = (t - n.__born) / 500; born = age < 1 ? age : 1; if (age >= 1) n.__born = 0; }  // nảy sinh
-    const r = (n.__r || 5) * (isHover ? 1.35 : 1) * breathe * pulse * (0.4 + 0.6 * born);
+    const r = Math.max((n.__r || 5) * (isHover ? 1.35 : 1) * breathe * pulse * (0.4 + 0.6 * born), this._catFilter === n.__cat ? 9 / scale : 0);
     const alpha = (dim ? 0.14 : 1) * ent * (0.4 + 0.6 * born);
 
     // Quầng sáng (tông sáng: vệt mực loang quanh chấm)
@@ -751,6 +755,7 @@ class TISAGraph {
   // Rọi sáng một danh mục (bấm nhãn PERSONAL/SALES... quanh não). null = bỏ lọc.
   spotlightCategory(cat) {
     this._catFilter = cat ? String(cat).replace(/^\d+\s*[-_.]\s*/, "").trim().toLowerCase() : null;
+    window.TISADao.roiCum(this);
     // Draw the new highlight now (the label that was clicked sits outside the canvas, so no pointer woke the graph).
     try { if (this.graph) this.graph.linkColor(this.graph.linkColor()); } catch (e) {}
     this._poke(300);
