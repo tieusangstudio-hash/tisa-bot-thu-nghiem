@@ -45,6 +45,14 @@ from pathlib import Path
 
 import tisa_chuyen_may as cm
 
+# Bộ cài thử (launchd) đặt PATH thiếu /usr/sbin: `screencapture` (chụp màn hình) và `scutil` nằm ở đó nên AI không chụp được
+# màn hình, không đọc được tên máy (thấy 21/11/2026 trên M4 của chủ). Bổ sung ngay lúc nạp, mọi tiến trình con (kể cả AI) đều nhận.
+if sys.platform == "darwin":
+    _pt = os.environ.get("PATH", "").split(os.pathsep)
+    _them = [d for d in ("/usr/bin", "/bin", "/usr/sbin", "/sbin") if d not in _pt]
+    if _them:
+        os.environ["PATH"] = os.pathsep.join([p for p in _pt if p] + _them)
+
 try:    # ở cấp module: tệp dùng `from __future__ import annotations`, FastAPI đọc chú thích kiểu theo tên TOÀN CỤC.
     from fastapi import Request    # Import trong gan() thì `req: Request` bị hiểu là tham số ?req= và mọi POST trả 422 "Field required".
 except Exception:  # noqa: BLE001 - dòng lệnh, test thuần không cần FastAPI

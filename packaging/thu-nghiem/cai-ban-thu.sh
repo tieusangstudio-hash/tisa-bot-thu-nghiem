@@ -121,7 +121,7 @@ cat > "$PLIST" <<EOF
     <key>DOI_QUAN_HOME</key><string>${DIR}/_doi-quan/home</string>
     <key>DOI_QUAN_ENV</key><string>${DIR}/_doi-quan/.env</string>
     <key>TISA_CLAUDE_AUTO_UPDATE</key><string>0</string>
-    <key>PATH</key><string>${NODE_DIR}${HOME}/.local/bin:${HOME}/.tisa/node/bin:/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin</string>
+    <key>PATH</key><string>${NODE_DIR}${HOME}/.local/bin:${HOME}/.tisa/node/bin:/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin</string>
   </dict>
   <key>KeepAlive</key><true/>
   <key>RunAtLoad</key><true/>
