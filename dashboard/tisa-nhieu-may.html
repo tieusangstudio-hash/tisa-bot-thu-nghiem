@@ -387,7 +387,7 @@ details[open] summary { margin-bottom: 8px; }
       }
       if (v.ket_qua && v.ket_qua.het) {
         var con = Math.max(0, Math.round((v.ket_qua.het * 1000 - Date.now()) / 60000));
-        $("hanMa").textContent = con > 0 ? "Dán dòng này ở máy mới (bước 3) trong " + con + " phút nữa. Chỉ dùng được một lần." : "Dòng ghép đã hết hạn. Bấm Tạo dòng ghép để lấy dòng mới.";
+        $("hanMa").textContent = con > 0 ? "Dùng được ngay: dán dòng này ở máy mới (bước 3). Còn hạn " + con + " phút, chỉ dùng được một lần." : "Dòng ghép đã hết hạn. Bấm Tạo dòng ghép để lấy dòng mới.";
       }
       if (v.loai === "ghep" && v.xong && !v.loi) $("viecChu").textContent = "Đã nhận dữ liệu. TISA BOT đang khởi động lại, mở lại trang sau 1 đến 2 phút.";
     }
@@ -402,7 +402,8 @@ details[open] summary { margin-bottom: 8px; }
     $("yNghiaVai").textContent = Y_NGHIA[vn.lop] + (S.cho_doi ? " Vai mới đang chờ áp, máy sẽ tự khởi động lại." : "");
 
     var kiem = [];
-    kiem.push(S.loi_nhip ? ["xau", "Chưa nói chuyện được với Trạm: " + S.loi_nhip] : ["", "Nối Trạm tốt, báo lần cuối " + truoc(S.luc_nhip)]);
+    kiem.push(S.loi_nhip ? ["xau", "Chưa nói chuyện được với Trạm: " + S.loi_nhip] :
+      S.luc_nhip ? ["", "Nối Trạm tốt, báo lần cuối " + truoc(S.luc_nhip)] : ["xau", "Đang nối Trạm, chờ khoảng 30 giây"]);
     var d = S.dong_bo || {};
     if (S.dang_dong_bo) kiem.push(["", "Bộ não đang đồng bộ..."]);
     else if (d.loi) kiem.push(["xau", "Đồng bộ bộ não có lỗi, máy sẽ tự thử lại sau 2 phút"]);

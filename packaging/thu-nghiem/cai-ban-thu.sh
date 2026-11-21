@@ -83,6 +83,14 @@ if ! command -v claude >/dev/null 2>&1; then
   command -v claude >/dev/null 2>&1 && echo "   Claude CLI: đã cài (đăng nhập Claude trong TISA BOT sau khi ghép)." \
     || echo "   (Chưa cài được Claude CLI. TISA BOT vẫn chạy; cài sau ở trang Kết nối.)"
 fi
+# Cho Terminal của người dùng thấy node, npm, claude, python3.12 vừa cài vào thư mục riêng
+# (21/11/2026: chủ gõ "npm install -g @openai/codex" bị "command not found: npm").
+DONG_PATH='export PATH="$HOME/.local/bin:$HOME/.tisa/node/bin:$PATH"   # TISA BOT'
+for rc in "$HOME/.zprofile" "$HOME/.bash_profile"; do
+  if [ "$rc" = "$HOME/.zprofile" ] || [ -f "$rc" ]; then
+    grep -qF '.tisa/node/bin' "$rc" 2>/dev/null || printf '\n%s\n' "$DONG_PATH" >> "$rc"
+  fi
+done
 
 if [ -d "$DIR/.git" ]; then
   git -C "$DIR" pull -q --ff-only || echo "   (không cập nhật được mã, giữ bản đang có)"
