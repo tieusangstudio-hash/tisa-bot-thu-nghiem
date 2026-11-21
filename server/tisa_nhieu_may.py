@@ -33,6 +33,7 @@ import platform
 import re
 import secrets
 import shutil
+import subprocess
 import sys
 import threading
 import time
@@ -1208,7 +1209,26 @@ def tinh_trang() -> dict:
             "may": n.get("may") or [], "vai": n.get("vai") or {}, "loi_nhip": _tt.get("loi_nhip"), "luc_nhip": _tt.get("luc_nhip"),
             "dia_chi": dia_chi_may(), "dong_bo": _tt.get("dong_bo") or db.get("so") or {}, "luc_dong_bo": db.get("luc"),
             "so_tep_dong_bo": len(db.get("goc") or {}), "dang_dong_bo": _tt.get("dang_dong_bo"),
-            "viec": {k: v for k, v in (_viec.get("v") or {}).items()}, "ten_vai": TEN_VAI, "link_token": _link_token()}
+            "viec": {k: v for k, v in (_viec.get("v") or {}).items()}, "ten_vai": TEN_VAI, "link_token": _link_token(),
+            "lenh_cai": _lenh_cai(), "dong_bo_giay": DONG_BO_GIAY, "tep_toi_da_mb": TEP_TOI_DA // (1024 * 1024)}
+
+
+def _lenh_cai() -> dict:
+    """Lệnh cài TISA BOT cho máy thứ 2, hiện ở bước "Thêm máy". Chỉ có khi bản này mang bộ cài thử nghiệm (packaging/thu-nghiem)."""
+    if not (ROOT / "packaging" / "thu-nghiem" / "cai-ban-thu.sh").is_file():
+        return {}
+    kho = "tieusangstudio-hash/tisa-bot-thu-nghiem"
+    try:
+        r = subprocess.run(["git", "-C", str(ROOT), "remote", "get-url", "origin"], capture_output=True, text=True, timeout=10)
+        m = re.search(r"github\.com[:/]([\w.-]+/[\w.-]+?)(?:\.git)?/?$", (r.stdout or "").strip())
+        if m:
+            kho = m.group(1)
+    except Exception:  # noqa: BLE001
+        pass
+    goc = "https://raw.githubusercontent.com/%s/main/packaging/thu-nghiem/" % kho
+    return {"mac": "curl -fsSL %scai-ban-thu.sh | bash" % goc,
+            "win": 'powershell -NoProfile -ExecutionPolicy Bypass -Command "irm %scai-ban-thu.ps1 | iex"' % goc,
+            "cong": 7790}
 
 
 def _link_token() -> str:
