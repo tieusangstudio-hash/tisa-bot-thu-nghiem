@@ -48,11 +48,14 @@
     "@media (max-width:760px){.tml-nhan{margin-left:6px;padding:0 4px 0 8px;gap:6px}.tml-nhan b{max-width:96px}.tml-nhan .tml-vai{padding:4px 5px;font-size:10.5px}}",
     "@media (max-width:420px){.tml-nhan b{display:none}.tml-nhan{padding:0 4px 0 8px}}",
     // Không dùng lớp cp-plus: tisa-trinh-duyet.js chèn nút Trình duyệt sau MỌI nút cp-plus (thấy 21/11: hai nút Trình duyệt).
-    ".tml-pill{height:32px;max-width:220px;padding:0 11px;gap:6px;display:inline-flex;align-items:center;white-space:nowrap;font:600 12.5px/1 inherit;border-radius:999px;flex:0 1 auto;min-width:0;cursor:pointer;background:transparent;color:var(--text2,#5b6478);border:1px solid var(--border,rgba(23,47,114,.14))}",
-    ".tml-pill:hover{background:var(--surface-2,rgba(23,47,114,.06))}.tml-pill:focus-visible{outline:2px solid #F26A21;outline-offset:2px}",
-    ".tml-pill svg{width:16px;height:16px;flex:none}.tml-pill span{overflow:hidden;text-overflow:ellipsis;min-width:0}.tml-pill .tml-car{font-size:10px;opacity:.7;flex:none}",
-    ".tml-pill.xa{background:#F26A21!important;color:#fff!important;border-color:#F26A21!important}",
-    ".tml-pill.tat{background:#fef3c7!important;color:#92400e!important}",
+    // 22/11/2026 (chủ): cùng khuôn với hai nút kế bên (.mb-chip model, .cp-eff mức suy nghĩ): chữ 12px đậm 600, đệm 4px 11px, bo tròn, cùng cao; màu XANH ĐẬM nổi bật.
+    // (Khai báo cũ `font:600 12.5px/1 inherit` không hợp lệ nên bị bỏ: nút rơi về chữ mặc định và cao 32px, lệch hai nút kia.)
+    // Cam dành riêng cho trạng thái ĐANG GIAO máy khác (.xa), vàng cho máy đích đang tắt (.tat).
+    ".tml-pill{display:inline-flex;align-items:center;gap:6px;flex:0 1 auto;min-width:0;max-width:220px;padding:4px 11px;border-radius:999px;white-space:nowrap;cursor:pointer;font-family:var(--font,inherit);font-size:12px;font-weight:600;line-height:normal;color:#fff;border:1px solid #1d4ed8;background:linear-gradient(135deg,#3b82f6,#1d4ed8);box-shadow:0 2px 8px rgba(37,99,235,.35);transition:filter .15s,box-shadow .15s,transform .15s}",
+    ".tml-pill:hover{filter:brightness(1.08);box-shadow:0 3px 12px rgba(37,99,235,.5)}.tml-pill:active{transform:translateY(1px)}.tml-pill:focus-visible{outline:2px solid #F26A21;outline-offset:2px}",
+    ".tml-pill svg{width:14px;height:14px;flex:none}.tml-pill span{overflow:hidden;text-overflow:ellipsis;min-width:0}.tml-pill .tml-car{font-size:10px;opacity:.75;flex:none}",
+    ".tml-pill.xa{background:linear-gradient(135deg,#ff8a50,#F26A21)!important;color:#fff!important;border-color:#e2530f!important;box-shadow:0 2px 8px rgba(242,106,33,.4)!important}",
+    ".tml-pill.tat{background:#fef3c7!important;color:#92400e!important;border-color:#f59e0b!important;box-shadow:none!important}",
     ".tml-pill.gon span,.tml-pill.gon .tml-car{display:none}.tml-pill.gon{padding:0 9px}",
     "@media (max-width:640px){.tml-pill span{max-width:84px}.tml-pill{padding:0 9px}}",
     "#hudVoice.tml-xa{box-shadow:0 0 0 2px rgba(242,106,33,.55)!important}",
