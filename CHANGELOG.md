@@ -6,6 +6,12 @@ Lịch sử phiên bản TISA BOT. Bản mới nhất ở trên cùng. Xem ngay 
 
 Định dạng: mỗi phiên bản là một khối `## [x.y.z] - ngày`, bên dưới nhóm thay đổi theo `### Thêm mới / Sửa lỗi / Cải thiện / Bảo mật`.
 
+## [0.617.12] - 2026-11-22
+### Thêm mới
+- **Nhiều máy:** thêm chế độ **Chia ba** cho người có đủ 3 máy. Máy chủ giữ mặt tiền (tên miền, nhận khách, bảng Đội Quân), máy thứ hai chạy lịch tự động và việc nền, máy thứ ba làm việc nặng (dựng video). Trang chọn máy giữ nguyên lựa chọn khi tự làm mới.
+- **Bộ TISA V3.43:** Khung trình duyệt cạnh ô chat, xem trực tiếp và tự bấm gõ. Mỗi ô chat có tab riêng, AI ở ô chat nào chỉ làm trên tab của ô đó.
+- **Gộp từ bản học viên (TISA BOT) 0.617.2 đến 0.617.9:** nút Bàn giao dưới câu trả lời của cộng sự, báo cáo định kỳ gửi vào Zalo admin, cầu chì chống vòng lặp và giảm token chạy ngầm, ẩn bớt cộng sự, Chuyển máy mang theo đủ MCP tự cài, sửa đồ thị trang Bộ não, sửa chớp màn hình khi xem hình/video. Chi tiết từng bản ở các mục bên dưới.
+
 ## [0.617.11] - 2026-11-21
 
 ## [0.617.10] - 2026-11-21
@@ -13,18 +19,32 @@ Lịch sử phiên bản TISA BOT. Bản mới nhất ở trên cùng. Xem ngay 
 ## [0.617.9] - 2026-11-21
 
 ## [0.617.8] - 2026-11-21
+### Thêm mới
+- **Bộ TISA:** Sửa lỗi chớp màn hình khi bấm xem hình, video, kết quả (bỏ làm mờ nền khung xem, bảng Trình duyệt không vẽ lại thừa).
 
 ## [0.617.7] - 2026-11-21
+### Thêm mới
+- **Bộ TISA:** báo cáo định kỳ gửi thẳng vào Zalo admin, giảm token chạy ngầm (bot khách nhẹ hơn mà trả lời y như cũ, cầu chì chống vòng lặp), ẩn bớt cộng sự, khung Tình hình công việc gọn hơn.
 
 ## [0.617.6] - 2026-11-21
+### Thêm mới
+- **Bộ TISA:** ô chọn bộ não ghi đúng số ghi chú thật thay vì 5000+, trang Cộng sự cho ẩn bớt cộng sự ít dùng.
 
 ## [0.617.5] - 2026-11-21
+### Thêm mới
+- **Bộ TISA:** nút Bàn giao dưới câu trả lời của cộng sự: phiếu tích chọn việc, giao cho cộng sự khác và nối đuôi nhiều bước.
 
 ## [0.617.4] - 2026-11-21
+### Thêm mới
+- **Bộ TISA:** việc giao qua cuộc gọi hiện Đang làm nền như lệnh gõ chữ, cúp máy vẫn thấy việc đang chạy.
 
 ## [0.617.3] - 2026-11-21
+### Thêm mới
+- **Bộ TISA:** sửa trang Bộ não: thu thanh Hội thoại bên phải hoặc kho ghi chú thì đồ thị tự canh lại, không còn bị lệch và cắt.
 
 ## [0.617.2] - 2026-11-21
+### Thêm mới
+- **Bộ TISA:** V3.36: Chuyển máy mang theo đủ các MCP tự cài (SnapGen, HeyGen, tisa-web...). Trước đây gói bỏ sót thư mục _mcp nên sang máy mới các MCP này không chạy được.
 
 ## [0.617.1] - 2026-11-20
 ### Sửa lỗi

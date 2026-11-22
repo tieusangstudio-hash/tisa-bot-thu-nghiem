@@ -25,7 +25,7 @@
   ];
 
   var CSS = [
-    ".tbd-lop{position:fixed;inset:0;z-index:2147482000;display:flex;align-items:center;justify-content:center;padding:clamp(8px,2.2vw,28px);background:rgba(6,10,26,.66);backdrop-filter:blur(6px);animation:tbdVao .14s ease-out}",
+    ".tbd-lop{position:fixed;inset:0;z-index:2147482000;display:flex;align-items:center;justify-content:center;padding:clamp(8px,2.2vw,28px);background:rgba(6,10,26,.8);animation:tbdVao .14s ease-out}",
     "@keyframes tbdVao{from{opacity:0}to{opacity:1}}",
     ".tbd-cua{display:flex;flex-direction:column;width:min(860px,100%);max-height:100%;background:var(--mm-base,#131a3a);color:var(--mm-ink,#dbe4ff);border:1px solid var(--mm-line2,rgba(255,255,255,.16));border-radius:18px;overflow:hidden;box-shadow:0 30px 80px -20px rgba(0,0,0,.6);font-family:inherit}",
     ".tbd-dau{display:flex;align-items:center;gap:12px;padding:14px 16px;border-bottom:1px solid var(--mm-line,rgba(255,255,255,.1));flex:none}",
@@ -277,7 +277,9 @@
     if (!lop || !ST) return;
     var tabs = "<div class='tbd-tabs'><button type='button' class='" + (TAB === "tb" ? "on" : "") + "' data-tbd-tab='tb'>Trình duyệt</button><button type='button' class='" + (TAB === "may" ? "on" : "") + "' data-tbd-tab='may'>Máy tính</button></div>";
     var nd = TAB === "may" ? veMay() : veTb();
-    lop.querySelector(".tbd-than").innerHTML = tabs + nd;
+    var kh = tabs + nd, than = lop.querySelector(".tbd-than");
+    if (than.__tbdKh === kh) return;      // nội dung y hệt thì KHÔNG vẽ lại (vẽ lại mỗi 4 giây làm bảng chớp và mất ảnh chụp đang xem)
+    than.__tbdKh = kh; than.innerHTML = kh;
   }
 
   // Đang gõ tên, chọn thời hạn hay mở hộp xác nhận thì KHÔNG vẽ lại bảng (vẽ lại mỗi 3 giây làm mất chữ đang gõ).
@@ -362,7 +364,11 @@
     if (t.hasAttribute("data-tbd-duyet")) {
       var id = t.getAttribute("data-tbd-duyet"), ok = t.getAttribute("data-ok") === "1", tat = Number(t.getAttribute("data-tat") || 0);
       t.disabled = true;
-      var truoc = tat ? api("/trinh-duyet/muc", { muc: "toan_quyen", phut: tat }) : Promise.resolve();
+      // (V3.43, chủ báo 22/11: bấm "đừng hỏi nữa" rồi mà vẫn hỏi hoài) Thẻ xin duyệt có thể là của trình duyệt HOẶC của điều khiển máy tính
+      // (op may_*, vd gõ phím vào Chrome). Hai bên có mức riêng: trước đây chỉ bật Toàn quyền trình duyệt nên việc trên máy tính vẫn hỏi. Bật cả hai,
+      // quyền xóa tệp giữ tắt.
+      var truoc = tat ? Promise.all([api("/trinh-duyet/muc", { muc: "toan_quyen", phut: tat }),
+        api("/may-ai/trang-thai").then(function (sm) { return (sm && sm.ho_tro === false) ? 0 : Promise.all([api("/may-ai/muc", { muc: "toan_quyen", phut: tat }), api("/may-ai/cho-xoa", { phut: 0 })]); }).catch(function () {})]) : Promise.resolve();
       truoc.then(function () { return api("/trinh-duyet/duyet", { id: id, ok: ok }); }).then(function () { lam(); if (ok) baoChat(); });
       return;
     }
@@ -953,6 +959,8 @@
         coMay ? api("/may-ai/cho-xoa", { phut: 0 }) : 0
       ]).then(function () {
         guiNgam(text + CAM_XOA, tieuDe || "Hỗ trợ cài đặt", agent); lam(true);
+        // (V3.43, chủ 22/11) Đấu nối tự động: mở khung Trình duyệt cạnh màn hình để anh thấy bot đang làm gì, ở trang Chrome nào.
+        if (W.TISAKhungTD && innerWidth > 820) setTimeout(function () { try { sessionStorage.removeItem("tkd-tat:" + ((W.TISASessions && W.TISASessions.current && W.TISASessions.current()) || "")); } catch (x) {} W.TISAKhungTD.mo({ cho: true }); }, 2500);
         thongBaoNho("TISA BOT đang làm giúp anh. Cửa sổ trợ lý ở góc phải màn hình báo tiến độ, anh nói hoặc gõ với em được ở đó. Đã bật Toàn quyền 2 giờ (không xóa tệp)." + canh, !!canh);
         nhoDang = false; return true;
       });

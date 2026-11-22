@@ -254,11 +254,12 @@ def _bo(rel_parts, ten: str) -> bool:
     return ten in BO_TEP or ten.endswith(BO_DUOI)
 
 
-GIU_THU_MUC_GACH = {"_mcp"}
-
-
 # Bộ não là dữ liệu của chủ: chỉ bỏ rác máy, giữ mọi thư mục kể cả .git (sao lưu GitHub của bộ não) và thư mục tên "logs".
 BO_THU_MUC_NAO = {"node_modules", "__pycache__", ".Trash", ".pytest_cache"}
+
+# Thư mục đầu "_" ở gốc cài là bản dự phòng/rác (_truoc-*, _to_delete, _work...) nên bỏ, TRỪ _mcp:
+# mã các MCP tự cài (SnapGen, HeyGen, tisa-web...) nằm ở đó; thiếu nó máy nhận báo "can't open file .../_mcp/<tên>/server.py".
+GIU_THU_MUC_GACH = {"_mcp"}
 
 
 def _duyet(goc: Path, tien_to: str, theo_doi, bo_cap_dau_gach=False, la_nao=False):

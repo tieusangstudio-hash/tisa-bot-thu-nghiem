@@ -9539,7 +9539,21 @@ def _safe_brain_name(name: str) -> str:
     return name[:60].strip()
 
 
-_BRAINS_MD_CAP = 5000       # trần đếm .md mỗi brain cho dropdown chọn brain
+_BRAINS_MD_CAP = 200000     # trần đếm .md mỗi brain cho dropdown chọn brain (V3.40: 5000 làm ô chọn ghi "5000+" mãi)
+_GHI_CHU_CACHE: dict = {}   # đường dẫn brain -> (mốc, số, bị cắt vì hết giờ)
+
+
+def _dem_ghi_chu_brain(path: str) -> tuple:
+    """Số .md của một brain, nhớ 20 giây và có hạn giờ 2,5 giây (hết giờ thì số là SÀN, kèm cờ)."""
+    now = time.monotonic()
+    c = _GHI_CHU_CACHE.get(path)
+    if c and now - c[0] < 20.0:
+        return c[1], c[2]
+    han = now + 2.5
+    n = _count_md(path, _BRAINS_MD_CAP, deadline=han)
+    cat = time.monotonic() >= han
+    _GHI_CHU_CACHE[path] = (now, n, cat)
+    return n, cat
 
 
 def _list_brains_sync() -> dict:
@@ -9568,9 +9582,9 @@ def _list_brains_sync() -> dict:
             if not p.is_dir() or p.name.startswith("."):
                 continue
             try:
-                notes = _count_md(str(p), _BRAINS_MD_CAP)
+                notes, _cat_gio = _dem_ghi_chu_brain(str(p))
             except Exception:
-                notes = 0
+                notes, _cat_gio = 0, False
             try:
                 is_default = p.resolve() == default_resolved
             except OSError:
@@ -9578,7 +9592,7 @@ def _list_brains_sync() -> dict:
             # `name` stays the FOLDER (the brain's address: delete, /brains/<folder>/..., backups); `label` is what to show
             # (0.219.0, brain_label): a rename sets the label and never moves the folder.
             out.append({"name": p.name, "label": brain_label.display(p), "path": str(p), "notes": notes,
-                        "notes_capped": notes >= _BRAINS_MD_CAP,
+                        "notes_capped": bool(notes >= _BRAINS_MD_CAP or _cat_gio),
                         "is_default": is_default})
     except Exception as e:
         return {"dir": str(base), "brains": [], "error": str(e)}
@@ -14241,7 +14255,9 @@ def _agent_builder_block(brain) -> str:
         f"skill `{_skills_dir(brain)}/<slug>/SKILL.md`, loop `{Path(root) / 'TISA' / 'loops'}/<slug>.md`.\n"
         "- Tạo trợ lý kèm model riêng, hay đổi model của trợ lý đang có: tool `tisa_team` op=create_agent / "
         "op=set_agent_model (slug, model, model_provider). Chưa thấy tool thì tìm bằng `tisa_search_tools`.\n"
-        "- Nhắc hẹn, việc định kỳ: `tisa_schedule`. Đừng nói là không tạo được khi các tool trên có sẵn.\n"
+        "- Nhắc hẹn, việc định kỳ: `tisa_schedule`. Đừng nói là không tạo được khi các tool trên có sẵn. "
+        "Anh muốn nhận báo cáo/kết quả qua Zalo Kênh Admin thì đặt chat_id=\"zalo_admin\" (máy tự nhận ra đúng Zalo admin, "
+        "đừng hỏi mã, đừng tự gửi bằng công cụ Zalo cá nhân).\n"
     )
 
 
@@ -15262,7 +15278,15 @@ async def _zalo_send_to(chat_id, text) -> tuple:
         async with httpx.AsyncClient(timeout=15) as c:
             for t in targets:
                 try:
-                    r = await c.post(url, json={"chat_id": t, "text": text[:1900]})
+                    try:
+                        import tisa_zalo_admin as _za
+                        _ps = _za.tach_tin(text) or [text[:1900]]
+                    except Exception:  # noqa: BLE001
+                        _ps = [text[:1900]]
+                    for _p in _ps:   # V3.41: tin dài chia nhiều tin, không cắt cụt
+                        r = await c.post(url, json={"chat_id": t, "text": _p})
+                        if not ((r.json() if r.content else {}).get("ok")):
+                            break
                     d = r.json() if r.content else {}
                     if d.get("ok"):
                         ok_any = True
@@ -15659,7 +15683,23 @@ async def _gui_qua_kenh(owner_chat, text, *, ngan="", viec=None, web="", card=""
     # chủ, tức là người giao việc không bao giờ thấy nó, còn chủ thì nhận một báo cáo không
     # rõ của ai - và máy chưa đấu Telegram thì mất hút hoàn toàn.
     if cid.startswith(ZALO_CHAT_PREFIX):
-        return await _zalo_send_to(cid[len(ZALO_CHAT_PREFIX):], text)
+        raw_z = cid[len(ZALO_CHAT_PREFIX):]
+        try:
+            import tisa_zalo_admin
+            if tisa_zalo_admin.la_dia_chi_admin(raw_z):
+                # V3.41: `zalo:admin` là địa chỉ ảo, đổi thành mã Zalo admin thật NGAY LÚC GỬI.
+                ids_z = tisa_zalo_admin.nguoi_nhan()
+                if not ids_z:
+                    return False, "Chưa khai ID Zalo admin ở trang Kênh Admin"
+                ok_z, err_z = False, ""
+                for i_z in ids_z:
+                    o_z, e_z = await _zalo_send_to(i_z, text)
+                    ok_z = ok_z or o_z
+                    err_z = err_z or e_z
+                return ok_z, ("" if ok_z else err_z)
+        except Exception as e_za:  # noqa: BLE001
+            print(f"[zalo admin] {type(e_za).__name__}: {e_za}", file=sys.stderr)
+        return await _zalo_send_to(raw_z, text)
     # Work handed over from Slack or WhatsApp reports back there (0.71.0), same reason as Zalo.
     _oc, _raw = owner_channels.by_prefix(cid)
     if _oc:
@@ -20180,6 +20220,39 @@ async def voice_live_ws(ws: WebSocket, session_id: str = Query(""), brain: str =
     jobs: dict = {}                  # việc bộ não chính đang chạy: số thứ tự -> {request, started, step}
     job_seq = {"n": 0}
 
+    def _mo_viec_goi(job):
+        """Việc giao qua cuộc gọi hiện như việc gõ chữ: thẻ Việc đang chạy + một lượt đang chạy của khung chat."""
+        try:
+            job["tid"] = tasks_feature.store.enqueue(
+                _brain_root(brain), title=str(job.get("request") or "")[:160], intent=str(job.get("request") or ""),
+                status="running", created_by="voice", chat_id=f"{WEB_CHAT_PREFIX}{conv_sid}")
+        except Exception as e:  # noqa: BLE001
+            print(f"[voice live] không tạo được thẻ Việc: {type(e).__name__}: {e}", file=sys.stderr)
+        try:
+            job["khoa_luot"] = luot_dang_chay.bat_dau(f"{WEB_CHAT_PREFIX}{conv_sid}", _brain_root(brain))
+        except Exception:  # noqa: BLE001
+            pass
+
+    def _dong_viec_goi(job, ket_qua, hong="", bo=False):
+        """Đóng thẻ Việc và lượt đang chạy của việc giao qua cuộc gọi. `bo`: câu nói thêm không có việc mới, bỏ thẻ."""
+        tid = job.pop("tid", "")
+        if tid:
+            try:
+                if bo:
+                    tasks_feature.store.cancel_running(tid, "câu nói thêm, không có việc mới")
+                elif hong:
+                    tasks_feature.store.block(tid, "", "voice_live", str(hong)[:2000], result=str(ket_qua or "")[:20000])
+                else:
+                    tasks_feature.store.complete(tid, "", str(ket_qua or "")[:20000] or "(việc xong nhưng không có nội dung)")
+            except Exception as e:  # noqa: BLE001
+                print(f"[voice live] không đóng được thẻ Việc: {type(e).__name__}: {e}", file=sys.stderr)
+        khoa = job.pop("khoa_luot", "")
+        if khoa:
+            try:
+                luot_dang_chay.ket_thuc(khoa)
+            except Exception:  # noqa: BLE001
+                pass
+
     async def _push_jobs(xong=None):
         """Gửi giao diện bản tóm tắt các việc đang chạy (thanh tình hình), kèm việc vừa xong nếu có."""
         try:
@@ -20512,6 +20585,7 @@ async def voice_live_ws(ws: WebSocket, session_id: str = Query(""), brain: str =
         if name == "ask_tisa":
             jobs[job_id] = job
             job["task"] = me
+            _mo_viec_goi(job)
             _ensure_heartbeat()
             await _push_jobs()
         sent = voice_live.parallel_request(running, req) if running else req
@@ -20558,6 +20632,10 @@ async def voice_live_ws(ws: WebSocket, session_id: str = Query(""), brain: str =
         finally:
             jobs.pop(job_id, None)
             brain_work.discard(me)
+            _kq_goi = locals().get("result", "")
+            _dong_viec_goi(job, _kq_goi,
+                           hong=("" if not (failed or not str(_kq_goi or "").strip()) else (str(_kq_goi or "") or ("anh bảo dừng" if job.get("huy") else "bị dừng giữa chừng"))),
+                           bo=bool(running and voice_live.is_noop_result(_kq_goi)))
             await _push_jobs(None if (running and voice_live.is_noop_result(locals().get("result", ""))) else [{"id": job_id, "ten": ("Đã dừng: " if job.get("huy") else "") + str(req)[:90], "loi": bool(failed) or sys.exc_info()[0] is not None}])
         if job.get("huy") and call["open"]:
             # Anh bảo dừng: không bong bóng, không đọc ra loa; chỉ báo xong để model khỏi chờ.
@@ -20799,6 +20877,13 @@ async def voice_live_ws(ws: WebSocket, session_id: str = Query(""), brain: str =
                 # owner asked for. The handoff finishes and posts its answer to this chat. It joins the chat's voice
                 # background work (a strong reference; "stop the background work" cancels it) and its time limit.
                 _nho_viec_nen_giong(conv_sid, task)
+                try:
+                    _tieu_de_goi = next((str(j.get("request") or "") for j in jobs.values() if j.get("task") is task), "")
+                    await asyncio.wait_for(push_to_chat(
+                        conv_sid, "Anh cúp máy rồi nhưng em vẫn đang làm việc anh giao ở nền. Xong em báo anh ngay trong khung chat này.",
+                        viec={"kind": "voice", "status": "giao", "title": _tieu_de_goi[:160]}), 5)
+                except Exception as e:  # noqa: BLE001
+                    print(f"[voice live] không báo được việc nền sau cúp máy: {type(e).__name__}: {e}", file=sys.stderr)
                 limit = loop.call_later(VOICE_BG_TIMEOUT, _expire, task)
                 task.add_done_callback(lambda _t, h=limit: h.cancel())
             else:
@@ -28408,6 +28493,7 @@ async def _tg_answer_engine(text, meta, progress, *, chat_id, sess, brain, mcfg,
             sess["cli"] = claude_engine(system_prompt=sysprompt, cwd=_goc, tag=f"telegram:{chat_id}")
         cli = sess["cli"]
         cli.system_prompt = sysprompt
+        cli.co_lap_cai_dat = bool(bot)   # V3.42: chỉ bot khách; kênh admin của chủ vẫn nạp cài đặt máy như cũ
         # Cùng luật với nhánh CLI của web: tên model nhà khác không đưa cho `claude`.
         cli.model = ((api_model if prov == "anthropic-cli" else "")
                      or mcfg.get("claude_model") or None)
@@ -29437,6 +29523,11 @@ def _zalo_precheck(text, meta):
     ids = tg_parse_ids(z.get("chat_id"))
     cid = str((meta or {}).get("chat_id") or "").strip()
     if cid and cid in ids:
+        try:   # V3.41: nhớ chat được phép nào vừa nhắn, để biết Zalo admin đang dùng là mã nào
+            import tisa_zalo_admin
+            tisa_zalo_admin.ghi_thay(cid)
+        except Exception:  # noqa: BLE001
+            pass
         # An allowed chat: a mention naming no agent, or several, is answered with the list before a turn starts.
         return _tg_owner_precheck(text, {**(meta or {}), "chat_id": ZALO_CHAT_PREFIX + cid})
     # DANH SÁCH RỖNG = CHƯA AI ĐƯỢC PHÉP, không phải "ai cũng được".
@@ -34974,6 +35065,14 @@ except Exception as e:      # noqa: BLE001
     print(f"[tisa_browser] không bật được: {type(e).__name__}: {e}", file=sys.stderr)
 
 
+# ---- Bộ TISA: Khung trình duyệt cạnh ô chat, xem trực tiếp và tự bấm gõ (server/tisa_khung_trinh_duyet.py, V3.43) ----
+try:
+    import tisa_khung_trinh_duyet
+    tisa_khung_trinh_duyet.gan(app)
+except Exception as e:      # noqa: BLE001
+    print(f"[tisa_khung_trinh_duyet] không bật được: {type(e).__name__}: {e}", file=sys.stderr)
+
+
 # ---- Bộ TISA: Điều khiển máy tính cho AI Agent, 3 mức tự động, chống xóa (server/tisa_desktop.py) ----
 try:
     import tisa_desktop
@@ -34988,6 +35087,14 @@ try:
     tisa_tom_tat_chat.gan(app)
 except Exception as e:      # noqa: BLE001
     print(f"[tisa_tom_tat_chat] không bật được: {type(e).__name__}: {e}", file=sys.stderr)
+
+
+# ---- Bộ TISA: phiếu bàn giao giữa các cộng sự + chuỗi nối đuôi (server/tisa_ban_giao.py) ----
+try:
+    import tisa_ban_giao
+    tisa_ban_giao.gan(app)
+except Exception as e:      # noqa: BLE001
+    print(f"[tisa_ban_giao] không bật được: {type(e).__name__}: {e}", file=sys.stderr)
 
 
 # ---- Bộ TISA: nối MCP của Claude Code vào TISA BOT, mặc định, kèm thẻ báo ở trang Kết nối (server/tisa_claude_mcp.py) ----
@@ -35598,6 +35705,14 @@ def _auto_learning_note_tool(brain, conv_sid, event):
 async def _auto_learning_tick():
     """Scheduler: one unit of learning work (judge a few turns, or one learning run) in a worker thread."""
     if _AUTO_LEARNING_BUSY[0] or os.environ.get("TISA_AUTO_LEARNING_PAUSED") == "1":
+        return
+    # V3.42: mặc định TẮT (10 lần chạy trong 10 ngày, 7 thất bại, 0 lần được áp dụng, vẫn tốn token chấm điểm). Bật: settings
+    # auto_learning.enabled = true hoặc biến môi trường TISA_AUTO_LEARNING_ON=1.
+    try:
+        if not (os.environ.get("TISA_AUTO_LEARNING_ON") == "1"
+                or ((cfgmod.read_settings() or {}).get("auto_learning") or {}).get("enabled") is True):
+            return
+    except Exception:  # noqa: BLE001
         return
     if _side_work_paused():      # the plan allowance is nearly used up: this work waits for the reset
         return
