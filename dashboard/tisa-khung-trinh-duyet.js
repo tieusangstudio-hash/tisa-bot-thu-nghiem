@@ -112,7 +112,8 @@
     var ds = TT.tabs || [], h = ds.map(function (t) {
       return "<div class='tkd-tab" + (t.id === TT.tab ? " on" : "") + "' data-tab='" + esc(t.id) + "' title='" + esc(t.url) + "'><span>" + esc(t.tieu_de || "Tab mới") + "</span><b data-dong='" + esc(t.id) + "' title='Đóng tab'>×</b></div>";
     }).join("") + "<button type='button' class='tkd-ic' data-k='tab_moi' title='Mở tab mới'>+</button>";
-    el.querySelector(".tkd-tabs").innerHTML = h;
+    var tb = el.querySelector(".tkd-tabs");
+    if (tb.__sig !== h) { tb.innerHTML = h; tb.__sig = h; }      // chỉ dựng lại khi danh sách tab thật sự đổi: server báo mỗi 2,5 giây, dựng lại mãi làm thanh tab chớp (22/11/2026)
     var dc = el.querySelector(".tkd-dc");
     if (D.activeElement !== dc) dc.value = TT.url && TT.url !== "about:blank" && !/^data:/.test(TT.url) ? TT.url : "";      // trang chủ TISA (data:) không hiện chuỗi dài
     el.querySelector("[data-k=lui]").disabled = !TT.lui;
@@ -134,7 +135,7 @@
     if (hoiTQ) h += "<div class='tkd-xn'><p><b>Bật Toàn quyền?</b> AI tự bấm, gõ, đăng, gửi trong trình duyệt và trên máy tính mà không hỏi (vẫn không xóa tệp). Mật khẩu, mã OTP anh tự nhập trong khung này.</p>" +
       "<select data-k='phut'><option value='30'>30 phút</option><option value='120' selected>2 giờ</option><option value='480'>8 giờ</option><option value='0'>Đến khi anh tắt</option></select>" +
       "<button type='button' class='tkd-nut cam' data-k='tq_ok'>Bật</button><button type='button' class='tkd-nut' data-k='tq_huy'>Hủy</button></div>";
-    q.innerHTML = h;
+    if (q.__sig !== h) { q.innerHTML = h; q.__sig = h; }          // như veTabs: dựng lại hai ô chọn mỗi 4 giây làm thanh quyền chớp và đóng mất danh sách đang mở
     man.classList.toggle("ai", cur === "toan_quyen" && !ST.dung);
   }
   // Một mức cho cả trình duyệt và điều khiển máy tính (gõ phím, bấm chuột thật): chọn Toàn quyền ở khung là bot không hỏi nữa ở cả hai.
