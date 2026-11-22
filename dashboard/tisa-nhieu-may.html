@@ -256,10 +256,12 @@ details[open] summary { margin-bottom: 8px; }
         <label><input type="radio" name="cd" value="chu"><b>Máy này làm hết</b><small>Máy này là máy chủ: nhận khách, chạy lịch, giữ bảng Đội Quân, làm cả việc nặng. Máy khác chỉ dự phòng.</small><em>Dùng khi: máy này đang ở văn phòng, chạy hằng ngày.</em></label>
         <label><input type="radio" name="cd" value="phu"><b>Máy khác làm chủ</b><small>Máy này chỉ dự phòng: giữ bộ não đồng bộ, không nhận khách, không chạy lịch.</small><em>Dùng khi: chuyển việc sang máy khác, ví dụ Tết về quê bật máy ở quê làm chủ.</em></label>
         <label><input type="radio" name="cd" value="chung"><b>Chia đôi</b><small>Một máy nhận khách và chạy lịch, máy kia chuyên dựng video và việc nặng.</small><em>Dùng khi: máy chủ yếu, có thêm máy mạnh để dựng video.</em></label>
+        <label><input type="radio" name="cd" value="chia_ba"><b>Chia ba (đủ 3 máy)</b><small>Máy 1 là mặt tiền: tên miền, nhận khách, bảng Đội Quân. Máy 2 chạy lịch tự động và việc nền. Máy 3 chuyên dựng video và việc nặng.</small><em>Dùng khi: có đủ 3 máy, muốn mỗi máy lo một việc để máy trả lời khách không bị chậm vì việc nền hay dựng video.</em></label>
       </div>
       <div class="hang">
-        <label class="o an" id="oChu">Máy làm chủ (nhận khách, lịch)<select id="selChu"></select></label>
-        <label class="o an" id="oPhu">Máy làm việc nặng (dựng video)<select id="selPhu"></select></label>
+        <label class="o an" id="oChu"><span id="chuChu">Máy làm chủ (nhận khách, lịch)</span><select id="selChu"></select></label>
+        <label class="o an" id="oLich"><span>Máy chạy lịch tự động (việc nền, Kanban)</span><select id="selLich"></select></label>
+        <label class="o an" id="oPhu"><span>Máy làm việc nặng (dựng video)</span><select id="selPhu"></select></label>
       </div>
       <p class="mo an" id="ghiChung">Hiện tại việc dựng video chưa tự chuyển sang máy kia. Muốn dùng máy mạnh: ở ô Tình trạng bấm <b>Mở máy này</b> trên máy đó, rồi giao việc trong cửa sổ đó.</p>
       <div class="hang"><button class="nut" id="nutCheDo">Áp dụng</button></div>
@@ -339,8 +341,10 @@ details[open] summary { margin-bottom: 8px; }
     }).join("");
   }
   function cheDoHienTai() {
-    var v = S.vai || {}, cong = (v.cong || {}).may_id, nang = (v.viec_nang || {}).may_id;
+    var v = S.vai || {}, cong = (v.cong || {}).may_id, nang = (v.viec_nang || {}).may_id, lich = (v.lich || {}).may_id;
     if (!cong) return "";
+    // Chia ba: mặt tiền (cong, khach, bang) chung một máy, lịch và việc nặng mỗi thứ một máy khác nhau.
+    if (lich && nang && (v.khach || {}).may_id === cong && (v.bang || {}).may_id === cong && lich !== cong && nang !== cong && lich !== nang) return "chia_ba";
     if (cong === S.may_id && nang === S.may_id) return "chu";
     if (cong !== S.may_id && nang !== S.may_id && (S.giu || []).length === 0) return "phu";
     return "chung";
@@ -348,7 +352,13 @@ details[open] summary { margin-bottom: 8px; }
   // Vai của một máy, nói bằng lời thường.
   function vaiCua(id) {
     var v = S.vai || {}, giu = Object.keys(v).filter(function (k) { return (v[k] || {}).may_id === id; });
-    if (giu.indexOf("cong") >= 0) return { ten: "Máy chủ", lop: "chu", giu: giu };
+    if (giu.indexOf("cong") >= 0) {
+      var lichO = giu.indexOf("lich") < 0 && (v.lich || {}).may_id;     // lịch đã giao cho máy khác (Chia ba)
+      return { ten: lichO ? "Máy chủ (mặt tiền)" : "Máy chủ", lop: "chu", giu: giu,
+        y: lichO ? "Tên miền của anh đang vào máy này. Máy này nhận khách và giữ bảng Đội Quân; lịch tự động chạy ở máy khác." : "" };
+    }
+    if (giu.indexOf("lich") >= 0 && giu.indexOf("viec_nang") < 0) return { ten: "Chạy lịch tự động", lop: "nang", giu: giu,
+      y: "Máy này không nhận khách. Nó chạy lịch tự động và việc nền, giữ bộ não đồng bộ." };
     if (giu.indexOf("viec_nang") >= 0) return { ten: "Làm việc nặng", lop: "nang", giu: giu };
     if (giu.length) return { ten: "Giữ một phần việc", lop: "nang", giu: giu };
     return { ten: "Máy phụ, dự phòng", lop: "", giu: giu };
@@ -399,7 +409,7 @@ details[open] summary { margin-bottom: 8px; }
     $("tenMay").textContent = S.ten_may;
     $("vaiLon").textContent = vn.ten;
     $("vaiLon").className = "vai-lon " + vn.lop;
-    $("yNghiaVai").textContent = Y_NGHIA[vn.lop] + (S.cho_doi ? " Vai mới đang chờ áp, máy sẽ tự khởi động lại." : "");
+    $("yNghiaVai").textContent = (vn.y || Y_NGHIA[vn.lop]) + (S.cho_doi ? " Vai mới đang chờ áp, máy sẽ tự khởi động lại." : "");
 
     var kiem = [];
     kiem.push(S.loi_nhip ? ["xau", "Chưa nói chuyện được với Trạm: " + S.loi_nhip] :
@@ -429,8 +439,10 @@ details[open] summary { margin-bottom: 8px; }
     var cd = cheDoHienTai();
     if (!document.querySelector('input[name=cd]:checked') && cd) { var r = document.querySelector('input[name=cd][value="' + cd + '"]'); if (r) r.checked = true; }
     var v2 = S.vai || {};
-    veMayChon($("selChu"), (v2.cong || {}).may_id);
-    veMayChon($("selPhu"), (v2.viec_nang || {}).may_id);
+    // Trang tự làm mới mỗi 12 giây: đã tự chọn máy thì giữ nguyên lựa chọn, đừng trả về vai hiện tại.
+    veMayChon($("selChu"), giuChon("selChu", (v2.cong || {}).may_id));
+    veMayChon($("selLich"), giuChon("selLich", (v2.lich || {}).may_id));
+    veMayChon($("selPhu"), giuChon("selPhu", (v2.viec_nang || {}).may_id));
     capNhatChon();
     $("bangVai").innerHTML = "<tr><th>Phần việc</th><th>Máy làm</th></tr>" + Object.keys(S.ten_vai).map(function (k) {
       return "<tr><td>" + esc(S.ten_vai[k]) + '</td><td><select data-vai="' + k + '">' + (S.may || []).map(function (m) {
@@ -445,13 +457,34 @@ details[open] summary { margin-bottom: 8px; }
       (d.loi ? " · <span style='color:var(--do)'>lỗi: " + esc(typeof d.loi === "string" ? d.loi : d.loi + " tệp") + "</span>" : "") +
       (d.chan_xoa ? " · <b>đã chặn xóa " + so(d.chan_xoa) + " tệp</b> vì thư mục bộ não có vẻ đang vắng" : "");
   }
+  var daChonMay = false;      // người dùng đã tự chọn máy trong ba ô chọn: các lần làm mới trang không được ghi đè
+  function giuChon(id, macDinh) { var s = $(id); return daChonMay && s.value ? s.value : macDinh; }
+  // Chọn "Chia ba" mà ba ô chưa là ba máy khác nhau thì điền sẵn: giữ máy chủ và máy nặng đang chọn, máy còn lại làm lịch (ưu tiên máy đang bật).
+  function goiYChiaBa() {
+    var chu = $("selChu").value || S.may_id, lich = $("selLich").value, nang = $("selPhu").value;
+    if (chu && lich && nang && chu !== lich && chu !== nang && lich !== nang) return;
+    if (nang === chu) nang = "";
+    if (lich === chu || lich === nang) lich = "";
+    function ranh(tru) {
+      var ds = (S.may || []).filter(function (m) { return tru.indexOf(m.id) < 0; });
+      ds.sort(function (a, b) { return (b.dang_bat ? 1 : 0) - (a.dang_bat ? 1 : 0); });
+      return ds.length ? ds[0].id : "";
+    }
+    if (!lich) lich = ranh([chu, nang]);
+    if (!nang) nang = ranh([chu, lich]);
+    $("selChu").value = chu; $("selLich").value = lich; $("selPhu").value = nang;
+  }
   function capNhatChon() {
     var c = (document.querySelector('input[name=cd]:checked') || {}).value;
-    $("oChu").classList.toggle("an", c !== "phu" && c !== "chung");
-    $("oPhu").classList.toggle("an", c !== "chung");
-    $("ghiChung").classList.toggle("an", c !== "chung");
+    $("oChu").classList.toggle("an", c !== "phu" && c !== "chung" && c !== "chia_ba");
+    $("oLich").classList.toggle("an", c !== "chia_ba");
+    $("oPhu").classList.toggle("an", c !== "chung" && c !== "chia_ba");
+    $("ghiChung").classList.toggle("an", c !== "chung" && c !== "chia_ba");
+    $("chuChu").textContent = c === "chia_ba" ? "Máy chủ, mặt tiền (tên miền, nhận khách, bảng Đội Quân)" : "Máy làm chủ (nhận khách, lịch)";
+    if (c === "chia_ba" && !daChonMay) goiYChiaBa();
   }
-  document.querySelectorAll('input[name=cd]').forEach(function (r) { r.onchange = capNhatChon; });
+  document.querySelectorAll('input[name=cd]').forEach(function (r) { r.onchange = function () { daChonMay = false; capNhatChon(); }; });
+  ["selChu", "selLich", "selPhu"].forEach(function (id) { $(id).onchange = function () { daChonMay = true; }; });
   document.querySelectorAll(".lua").forEach(function (b) {
     b.onclick = function () {
       var l = b.getAttribute("data-lua");
@@ -490,15 +523,23 @@ details[open] summary { margin-bottom: 8px; }
     var c = (document.querySelector('input[name=cd]:checked') || {}).value;
     if (!c) throw new Error("Chọn một cách chia việc.");
     var body = { che_do: c };
-    if (c === "phu" || c === "chung") body.may_chu = $("selChu").value;
-    if (c === "chung") body.may_phu = $("selPhu").value;
-    if (c === "chung" && !body.may_chu) body.may_chu = S.may_id;
+    if (c === "phu" || c === "chung" || c === "chia_ba") body.may_chu = $("selChu").value;
+    if (c === "chung" || c === "chia_ba") body.may_phu = $("selPhu").value;
+    if (c === "chia_ba") body.may_lich = $("selLich").value;
+    if ((c === "chung" || c === "chia_ba") && !body.may_chu) body.may_chu = S.may_id;
     if (c === "phu" && body.may_chu === S.may_id) throw new Error("Chọn một máy KHÁC làm chủ.");
+    if (c === "chia_ba") {
+      if ((S.may || []).length < 3) throw new Error("Chia ba cần ít nhất 3 máy trong nhóm, hiện mới có " + (S.may || []).length + ". Ghép thêm máy ở phần trên, hoặc dùng \"Chia đôi\".");
+      if (!body.may_chu || !body.may_lich || !body.may_phu || body.may_chu === body.may_lich || body.may_chu === body.may_phu || body.may_lich === body.may_phu)
+        throw new Error("Chia ba cần ba máy KHÁC nhau: mỗi ô chọn một máy riêng.");
+    }
     var tom = c === "chu" ? "Máy này (" + S.ten_may + ") thành máy chủ. Máy chủ cũ tự xuống làm dự phòng." :
       c === "phu" ? "Máy " + tenCua(body.may_chu) + " thành máy chủ, máy này làm dự phòng." :
+      c === "chia_ba" ? "Máy " + tenCua(body.may_chu) + " làm mặt tiền (tên miền, nhận khách, bảng Đội Quân), máy " + tenCua(body.may_lich) + " chạy lịch tự động, máy " + tenCua(body.may_phu) + " làm việc nặng." :
       "Máy " + tenCua(body.may_chu) + " nhận khách và chạy lịch, máy " + tenCua(body.may_phu) + " làm việc nặng.";
     if (!confirm(tom + "\nMáy nào đổi vai sẽ khởi động lại trong khoảng 1 phút. Tiếp tục?")) return;
     await api("/tisa-nhieu-may/api/che-do", body);
+    daChonMay = false;
     bao("Đã đổi. Các máy áp vai mới trong khoảng 1 phút.", "ok");
   }); };
   $("nutVai").onclick = function () { lam(this, async function () {

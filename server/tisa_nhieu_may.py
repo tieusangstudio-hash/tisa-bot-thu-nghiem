@@ -7,8 +7,9 @@ Cách làm:
   - TRẠM TISA (Cloudflare Worker của chính chủ, tram/tram-tisa.js) giữ sổ máy, vai, kho tệp đã mã hóa, và làm CỔNG cho tên miền.
   - Mỗi máy giữ 0..n VAI: cong (tên miền trỏ về máy này), khach (kênh nhận tin: Telegram, Zalo...), lich (lịch tự động, vòng nền, Kanban),
     bang (đồng bộ bảng Đội Quân trên Cloudflare), viec_nang (dựng video, việc nặng). Máy chủ = máy giữ "cong".
-    Ba chế độ trong Cài đặt chỉ là ba cách chia vai: Máy chủ (máy này giữ hết), Máy phụ (máy kia giữ hết), Chạy chung (máy chủ giữ cong/khach/lich/bang,
-    máy phụ giữ viec_nang).
+    Bốn chế độ trong Cài đặt chỉ là bốn cách chia vai: Máy chủ (máy này giữ hết), Máy phụ (máy kia giữ hết), Chạy chung (máy chủ giữ cong/khach/lich/bang,
+    máy phụ giữ viec_nang), Chia ba (cho ai có 3 máy: máy chủ giữ cong/khach/bang = mặt tiền, máy lịch giữ lich, máy nặng giữ viec_nang).
+    Trạm và sổ vai không giới hạn số máy; chế độ chỉ là bộ chia sẵn, ai muốn chia khác thì dùng "Tự chia từng phần việc" (dat_vai).
   - Máy KHÔNG giữ vai nào thì tắt đúng những thứ mà cơ chế CÁCH LY của Chuyển máy (tisa_chuyen_may.ap_cach_ly) vẫn tắt: kênh nhận tin, Zalo MCP,
     lịch tự động, bảng Đội Quân. Vai đổi thì máy ghi lại vai mới rồi KHỞI ĐỘNG LẠI; lần khởi động sau áp vai trước khi mở cấu hình (an toàn,
     không bị máy chủ ghi đè settings đang nằm trong bộ nhớ).
@@ -477,8 +478,30 @@ def _khoi_dong_lai(ly_do: str) -> None:
         nhat_ky("loi_khoi_dong_lai", loi=str(e)[:200])
 
 
-def dat_che_do(che_do: str, may_chu: str = "", may_phu: str = "") -> dict:
-    """Ba chế độ trong Cài đặt. Trả bảng vai mới. Máy nào đổi vai sẽ tự khởi động lại ở nhịp kế tiếp (tối đa khoảng 1 phút)."""
+def chia_ba(may_chu: str, may_lich: str, may_nang: str, ds_may: list = None) -> dict:
+    """Bảng vai cho chế độ CHIA BA (ai có đúng 3 máy trở lên). Thuần tính toán, không gọi mạng, để dễ kiểm thử.
+
+    Mặt tiền (cong + khach + bang) đi CÙNG một máy: tên miền, kênh nhận tin và bảng Đội Quân phải ở chung chỗ, vì máy không giữ vai bang bị tắt
+    Đội Quân mà tên miền lại đổ người dùng vào máy giữ cong. Máy lịch giữ lich (lịch tự động, vòng nền, Kanban) để máy mặt tiền rảnh trả lời khách.
+    Máy nặng giữ viec_nang (dựng video). Ba máy phải khác nhau và đều có trong sổ của Trạm (nếu sổ đã biết)."""
+    ba = [may_chu, may_lich, may_nang]
+    if not all(ba):
+        raise ValueError("Chia ba cần chọn đủ ba máy: máy chủ, máy chạy lịch, máy làm việc nặng.")
+    if len(set(ba)) < 3:
+        raise ValueError("Chia ba cần ba máy KHÁC nhau. Chỉ có hai máy thì dùng \"Chia đôi\".")
+    ten = {m.get("id"): m for m in (ds_may or [])}
+    if ten:
+        for x in ba:
+            if x not in ten:
+                raise ValueError("Có máy không nằm trong nhóm (đã gỡ hoặc chưa ghép). Làm mới trang rồi chọn lại.")
+        for x, vai in ((may_chu, "máy chủ"), (may_lich, "máy chạy lịch")):
+            if not ten[x].get("dang_bat"):
+                raise ValueError(f"Máy {ten[x].get('ten')} đang tắt, không làm {vai} được. Bật máy đó lên trước.")
+    return {"cong": may_chu, "khach": may_chu, "bang": may_chu, "lich": may_lich, "viec_nang": may_nang}
+
+
+def dat_che_do(che_do: str, may_chu: str = "", may_phu: str = "", may_lich: str = "") -> dict:
+    """Bốn chế độ trong Cài đặt. Trả bảng vai mới. Máy nào đổi vai sẽ tự khởi động lại ở nhịp kế tiếp (tối đa khoảng 1 phút)."""
     toi = cau_hinh().get("may_id")
     if che_do == "chu":
         gan = {k: toi for k in VAI}
@@ -492,6 +515,8 @@ def dat_che_do(che_do: str, may_chu: str = "", may_phu: str = "") -> dict:
         if not may_phu or may_phu == may_chu:
             raise ValueError("Chạy chung cần hai máy khác nhau: một máy chủ, một máy phụ làm việc nặng.")
         gan = {"cong": may_chu, "khach": may_chu, "lich": may_chu, "bang": may_chu, "viec_nang": may_phu}
+    elif che_do == "chia_ba":
+        gan = chia_ba(may_chu or toi, may_lich, may_phu, (_tt.get("nhip") or {}).get("may") or [])
     elif che_do == "tuy_chinh":
         raise ValueError("Dùng dat_vai cho tùy chỉnh.")
     else:
@@ -1365,7 +1390,7 @@ def gan(app) -> None:
         try:
             if b.get("gan"):
                 return dat_vai(b["gan"])
-            return dat_che_do(b.get("che_do") or "", b.get("may_chu") or "", b.get("may_phu") or "")
+            return dat_che_do(b.get("che_do") or "", b.get("may_chu") or "", b.get("may_phu") or "", b.get("may_lich") or "")
         except (ValueError, LoiTram) as e:
             return _loi(e)
 
