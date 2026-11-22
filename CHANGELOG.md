@@ -6,6 +6,15 @@ Lịch sử phiên bản TISA BOT. Bản mới nhất ở trên cùng. Xem ngay 
 
 Định dạng: mỗi phiên bản là một khối `## [x.y.z] - ngày`, bên dưới nhóm thay đổi theo `### Thêm mới / Sửa lỗi / Cải thiện / Bảo mật`.
 
+## [0.617.13] - 2026-11-22
+### Thêm mới
+- **Gộp từ bản học viên (TISA BOT) 0.617.10:** điều khiển máy tiết kiệm token (đọc nút, ô của ứng dụng ra chữ kèm mã bằng agent-desktop của Vercel Labs, tìm nút theo tên rồi bấm thẳng, không cần ảnh chụp mỗi bước); trình duyệt tiết kiệm token (xem trang bản gọn, tìm nút theo chữ op=tim, sau mỗi lần bấm tự báo trang đổi gì); ở chế độ Toàn quyền TISA BOT tự bấm Cho phép trên hộp "Cho phép gỡ lỗi từ xa?" của Chrome; hộp chọn tệp / Tải lên: AI tự đi tới thư mục, chọn tệp và bấm Mở; khung Trình duyệt có thêm Màn hình máy chủ và nút Mở khóa máy; sửa nút Trình duyệt ở ô nhập và ô nhập trên điện thoại.
+- **Khung Trình duyệt:** AI mở web ngay trong khung cạnh ô chat (việc nền giao từ ô chat, kể cả qua ChatGPT Live, giờ gắn đúng ô chat; AI được dặn dùng tisa_browser_do thay vì điều khiển cả máy để mở web); `mo_chrome` chỉ nhận tab mới mở và bảng TISA BOT không bao giờ bị nhận làm tab của AI.
+- **Khung Trình duyệt:** sổ tab giữ nguyên sau khi khởi động lại TISA BOT (trước đây mở lại khung thì mất tab AI đã mở).
+
+### Sửa lỗi
+- **Giao diện:** hết chớp khi giao việc kết nối: thanh tab và thanh quyền của khung, danh sách Việc vừa làm của cửa sổ trợ lý chỉ dựng lại khi nội dung đổi; bỏ làm mờ nền khi khung hoặc cửa sổ trợ lý đang mở; chấm xanh nhấp nháy không còn vẽ lại 60 lần/giây.
+
 ## [0.617.12] - 2026-11-22
 ### Thêm mới
 - **Nhiều máy:** thêm chế độ **Chia ba** cho người có đủ 3 máy. Máy chủ giữ mặt tiền (tên miền, nhận khách, bảng Đội Quân), máy thứ hai chạy lịch tự động và việc nền, máy thứ ba làm việc nặng (dựng video). Trang chọn máy giữ nguyên lựa chọn khi tự làm mới.
