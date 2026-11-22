@@ -135,6 +135,10 @@ def chat_hien_tai() -> str:
             cid = str(t.get("chat_id") or "")
             if cid.startswith("web:"):
                 sid = cid[len("web:"):]
+            elif cid.startswith("voice:"):
+                # Việc anh giao bằng giọng nói (ChatGPT Live, ask_tisa): mã lượt là "voice:<mã phiên>" hoặc "voice:<mã phiên>:<mã việc>".
+                # Trước đây không nhận ra nên lượt này coi như không thuộc ô chat nào: AI rơi về Chrome đã ghim, khung đứng yên (thấy 23/11/2026).
+                sid = cid[len("voice:"):].split(":", 1)[0]
         return sid
     except Exception:  # noqa: BLE001
         return ""
@@ -200,6 +204,45 @@ def hs_cua_chat(c=None) -> str:
     with _khoa:
         h = (_tab_chat.get(c) or {}).get("hs", "")
     return h if h and any(x["id"] == h for x in _doc_hs()["ds"]) else ""
+
+
+_XEM: dict = {}          # mã phiên chat -> lúc trang dashboard hỏi gần nhất (trang đang mở đúng ô chat đó, 3 giây một lần)
+
+
+def danh_dau_xem(c: str) -> None:
+    if c:
+        _XEM[c] = time.time()
+        if len(_XEM) > 200:
+            for k in sorted(_XEM, key=_XEM.get)[:100]:
+                _XEM.pop(k, None)
+
+
+def dang_xem(c: str, giay: float = 60) -> bool:
+    """Anh đang mở đúng ô chat này trên dashboard (trang vừa hỏi trong `giay` giây): có người ngồi xem khung Trình duyệt bên phải."""
+    return bool(c) and time.time() - _XEM.get(c, 0) < giay
+
+
+def _doi_mac_dinh_khung() -> None:
+    """Một lần (22/11/2026): các ô chat cũ đang gắn \"Chrome của anh\" (do thử nghiệm hoặc ghim cũ) thì bỏ gắn, để mặc định là khung Trình duyệt riêng.
+    Anh vẫn chọn lại Chrome của anh bất cứ lúc nào ở danh sách trình duyệt trong khung; lựa chọn đó được giữ."""
+    co = DIR / "da-doi-mac-dinh-khung"
+    try:
+        if co.exists():
+            return
+        ngoai = {x["id"] for x in _doc_hs()["ds"] if x.get("loai") == "ngoai"}
+        doi = False
+        with _khoa:
+            for e in _tab_chat.values():
+                if e.get("hs") in ngoai:
+                    e.pop("hs", None)
+                    e["tab"], e["tabs"] = "", []
+                    doi = True
+        if doi:
+            _luu_tab_chat()
+        DIR.mkdir(parents=True, exist_ok=True)
+        co.write_text("1", encoding="utf-8")
+    except Exception:  # noqa: BLE001
+        pass
 
 
 def chat_vua_dung(c: str, giay: float = 120) -> bool:
@@ -1871,7 +1914,90 @@ async def _mo_chrome_ho_so(a: dict) -> str:
             "trong đúng hồ sơ này)." % ten_h)
 
 
+def _luot_dau_noi() -> bool:
+    """Lượt này là của cộng sự Đạt Đấu Nối (nối MCP/API): host phân giải agent từ phiên đã lưu, không lấy từ lời model."""
+    try:
+        import turn_context
+        return str(((turn_context.current() or {}).get("agent") or {}).get("slug") or "") == "tisa-dau-noi"
+    except Exception:  # noqa: BLE001
+        return False
+
+
+def _gan_theo_cai_dat_dau_noi(c: str) -> bool:
+    """Ô chat của Đạt Đấu Nối chưa gắn trình duyệt: gắn theo lựa chọn anh đã lưu ở Cài đặt (① chạy ngầm / ② một hồ sơ Chrome đã đăng nhập đúng tài khoản cần nối).
+    Chưa lưu gì thì thôi (mặc định như mọi ô chat). Trả True nếu đã gắn."""
+    try:
+        import tisa_dau_noi as _DN
+        st = _DN.doc_trinh_duyet()
+        if st["loai"] == "rieng":
+            k = ho_so_khung()
+            if k:
+                gan_hs_chat(c, k)
+                _ghi_nk({"op": "dau_noi_trinh_duyet", "ket_qua": "đã gắn", "mo_ta": "Đạt Đấu Nối: trình duyệt riêng chạy ngầm"})
+                return True
+        elif st["loai"] == "chrome":
+            import tisa_chong_chen as _CC
+            r = _CC.dat_da_chon(st["ho_so"])
+            if r.get("ok"):
+                x = tao_ho_so_ngoai("chrome")
+                if x.get("ok"):
+                    gan_hs_chat(c, x["id"])
+                    _ghi_nk({"op": "dau_noi_trinh_duyet", "ket_qua": "đã gắn", "mo_ta": "Đạt Đấu Nối: Chrome hồ sơ %s" % (st.get("ten") or st["ho_so"])})
+                    return True
+    except Exception:  # noqa: BLE001
+        pass
+    return False
+
+
+def _khung_rieng_cua_chat() -> str:
+    """Tên trình duyệt riêng của khung nếu ô chat đang gọi đã gắn với khung Trình duyệt bên phải (trình duyệt chạy ngầm), ngược lại rỗng."""
+    ban = hs_cua_chat()
+    if not ban:
+        return ""
+    x = next((y for y in _doc_hs()["ds"] if y["id"] == ban), {})
+    return str(x.get("ten") or "Trình duyệt ô chat") if x.get("khung") else ""
+
+
 async def thuc_hien(op: str, a: dict) -> str:
+    """Cổng vào của mọi lệnh trình duyệt. Ô chat đã mở khung Trình duyệt bên phải thì MỌI trang đều mở trong khung (22/11/2026, chủ chốt):
+    lệnh mở Chrome ngoài / đổi trình duyệt bị đổi hướng, không còn mở cửa sổ Chrome ở ngoài khung nữa. Muốn dùng Chrome thật của chủ thì chủ
+    chọn \"Chrome của anh\" ở danh sách trình duyệt ngay trong khung (khi đó ô chat gắn với Chrome và lệnh mở Chrome chạy bình thường)."""
+    op = str(op or "").strip().lower()
+    a = dict(a or {})
+    ghi = ""
+    c0 = chat_hien_tai()
+    if not c0 and op in ("open", "mo_chrome", "doi_trinh_duyet"):
+        try:      # chẩn đoán: lượt này không thuộc ô chat nào (kênh, mã lượt) để lần sau biết thêm đường gọi nào chưa được nhận
+            import turn_context
+            _t = turn_context.current() or {}
+            _ghi_nk({"op": "khung_khong_ro_chat", "ket_qua": "bỏ qua", "mo_ta": "kenh=%s chat_id=%s" % (str(_t.get("kenh") or "")[:12], str(_t.get("chat_id") or "")[:30])})
+        except Exception:  # noqa: BLE001
+            pass
+    if c0 and not hs_cua_chat(c0) and _luot_dau_noi():
+        _gan_theo_cai_dat_dau_noi(c0)          # đúng trình duyệt/hồ sơ Chrome anh chọn cho việc nối, kể cả khi giao việc không qua nút Nhờ TISA BOT
+    if c0 and dang_xem(c0) and not hs_cua_chat(c0):
+        # Anh đang mở đúng ô chat này trên dashboard mà chưa chọn trình duyệt nào cho nó: mặc định là khung Trình duyệt riêng bên phải
+        # (trước đây rơi về Chrome của anh nếu từng ghim, AI mở cửa sổ Chrome ngoài còn khung đứng yên).
+        k0 = ho_so_khung()
+        if k0:
+            gan_hs_chat(c0, k0)
+            _ghi_nk({"op": "khung_mac_dinh", "ket_qua": "đã gắn", "mo_ta": "Ô chat đang xem dùng khung Trình duyệt riêng"})
+    ten_khung = _khung_rieng_cua_chat() if op in ("mo_chrome", "doi_trinh_duyet") else ""
+    if ten_khung:
+        if op == "doi_trinh_duyet":
+            return ("KHOA_TRINH_DUYET: Ô chat này đang dùng khung Trình duyệt bên phải (\"%s\"). Không đổi trình duyệt bằng lệnh. Làm tiếp ngay trong khung; "
+                    "anh cần Chrome thật của anh thì anh chọn \"Chrome của anh\" ở danh sách trình duyệt trong khung." % ten_khung)
+        url = str(a.get("url") or "").strip()
+        ghi = ("[Ô chat này có khung Trình duyệt bên phải (\"%s\"): em làm ngay trong khung, KHÔNG mở Chrome ngoài. Anh thấy mọi thao tác ở khung cạnh ô chat.]" % ten_khung)
+        if not url:
+            return ghi + " Cần mở trang nào thì gọi op=open url=... (tisa_browser_look), rồi tisa_browser_look / tisa_browser_do để làm tiếp."
+        op, a = "open", {"url": url}
+        _ghi_nk({"op": "mo_chrome", "ket_qua": "đổi hướng", "mo_ta": "Mở trong khung thay vì Chrome ngoài: %s" % url[:100]})
+    kq = await _thuc_hien_trong(op, a)
+    return (ghi + "\n" + kq) if ghi else kq
+
+
+async def _thuc_hien_trong(op: str, a: dict) -> str:
     op = str(op or "").strip().lower()
     a = a or {}
     chon = a.get("trinh_duyet") or a.get("browser") or ""
@@ -2634,3 +2760,4 @@ def gan(app) -> None:
 
 _nap_muc()
 _nap_tab_chat()
+_doi_mac_dinh_khung()

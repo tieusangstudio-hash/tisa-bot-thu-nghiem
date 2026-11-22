@@ -6,6 +6,15 @@ Lịch sử phiên bản TISA BOT. Bản mới nhất ở trên cùng. Xem ngay 
 
 Định dạng: mỗi phiên bản là một khối `## [x.y.z] - ngày`, bên dưới nhóm thay đổi theo `### Thêm mới / Sửa lỗi / Cải thiện / Bảo mật`.
 
+## [0.617.14] - 2026-11-22
+### Sửa lỗi
+- **Khung Trình duyệt:** AI không còn mở Chrome ở ngoài khi ô chat đã có khung Trình duyệt bên phải. Nguyên nhân: lệnh `mo_chrome` (mở Chrome hồ sơ thật) chạy thẳng, bỏ qua khung. Nay ô chat đã có khung thì `mo_chrome` tự đổi hướng sang mở trang ngay trong khung, `doi_trinh_duyet` bị khóa; ai cần Chrome thật thì chọn "Chrome của anh" ngay trong khung. Lời dặn AI cũng nói rõ: "mở bằng trình duyệt kế bên" chỉ cần `op=open`, không có thiết lập nào để đổi.
+- **Khung Trình duyệt mặc định cho ô chat đang mở:** anh đang mở đúng ô chat đó trên dashboard mà chưa chọn trình duyệt nào thì AI làm ngay trong khung riêng bên phải (trước đây rơi về Chrome của anh nếu từng ghim, cửa sổ Chrome bật ngoài còn khung đứng yên). Các ô chat cũ đang gắn Chrome của anh được trả về mặc định này một lần; anh vẫn chọn lại "Chrome của anh" ở danh sách trình duyệt trong khung và lựa chọn đó được giữ. Kênh khác (Zalo, lịch, việc nền không có ai xem) giữ cách cũ.
+- **Khung Trình duyệt có hai nút chọn rõ ràng:** ① **Chạy ngầm** (trình duyệt riêng, AI làm ngay trong khung, đăng nhập một lần trong khung) và ② **Chrome ngoài** (chọn một hồ sơ Chrome đã đăng nhập sẵn, AI mở tab ở cửa sổ Chrome bên ngoài). Mỗi ô chat nhớ lựa chọn của nó, nút ② nhớ hồ sơ dùng gần nhất, dòng chữ dưới thanh giải thích kiểu đang dùng.
+- **Việc giao bằng giọng nói (ChatGPT Live) giờ gắn đúng ô chat đang mở:** trước đây mã lượt dạng `voice:<phiên>` không được nhận ra nên AI coi như không thuộc ô chat nào, rơi về Chrome đã ghim và báo "bị chặn" khi xin đổi sang trình duyệt riêng, còn khung đứng yên.
+- **Đấu nối MCP/API tự động chọn được trình duyệt:** ở hộp ⚙ Cài đặt của Đạt Đấu Nối (trang Kết nối) anh chọn ① **Chạy ngầm** (làm ngay trong khung, đăng nhập trong khung) hoặc ② **Chrome ngoài** kèm **hồ sơ Chrome đã đăng nhập đúng tài khoản cần nối** (Google, Meta, Cloudflare...). Lần đầu bấm "Nhờ TISA BOT kết nối giúp" mà chưa chọn thì hỏi một lần rồi nhớ. Lựa chọn áp cho đúng ô chat của việc nối (cả khi giao việc không qua nút), nên nối đúng tài khoản, không mở Chrome mới chưa đăng nhập.
+- **Xem máy phụ qua tên miền:** bỏ thanh cam "Đang xem máy … · về máy chủ" che đáy màn hình (nhãn máy đã hiện ở thanh trên).
+
 ## [0.617.13] - 2026-11-22
 ### Thêm mới
 - **Gộp từ bản học viên (TISA BOT) 0.617.10:** điều khiển máy tiết kiệm token (đọc nút, ô của ứng dụng ra chữ kèm mã bằng agent-desktop của Vercel Labs, tìm nút theo tên rồi bấm thẳng, không cần ảnh chụp mỗi bước); trình duyệt tiết kiệm token (xem trang bản gọn, tìm nút theo chữ op=tim, sau mỗi lần bấm tự báo trang đổi gì); ở chế độ Toàn quyền TISA BOT tự bấm Cho phép trên hộp "Cho phép gỡ lỗi từ xa?" của Chrome; hộp chọn tệp / Tải lên: AI tự đi tới thư mục, chọn tệp và bấm Mở; khung Trình duyệt có thêm Màn hình máy chủ và nút Mở khóa máy; sửa nút Trình duyệt ở ô nhập và ô nhập trên điện thoại.

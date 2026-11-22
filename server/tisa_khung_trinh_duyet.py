@@ -635,6 +635,7 @@ def gan(app) -> None:
         """Trang hỏi: AI của ô chat này có đang dùng trình duyệt không (để tự mở khung cho anh xem)."""
         from fastapi.responses import JSONResponse
         c = re.sub(r"[^\w:.-]", "", chat)[:80]
+        B.danh_dau_xem(c)          # trang đang mở đúng ô chat này: AI làm trên web thì mặc định vào khung bên phải
         hs = B.hs_cua_chat(c) if c else ""
         x = next((y for y in B._doc_hs()["ds"] if y["id"] == hs), {}) if hs else {}
         try:

@@ -372,13 +372,7 @@ async function cong(req, env, url) {
   const loc = out.get("location");
   if (loc && loc.startsWith(goc.origin)) out.set("location", mo + loc.slice(goc.origin.length));
   let r = new Response(res.body, { status: res.status, statusText: res.statusText, headers: out });
-  if (xemMayKhac && (out.get("content-type") || "").includes("text/html")) {
-    r = new HTMLRewriter().on("body", {
-      element(el) {
-        el.append(`<a href="/_tram/chon/chu" style="position:fixed;z-index:2147483647;left:50%;transform:translateX(-50%);bottom:8px;background:#F26A21;color:#fff;font:600 13px system-ui;padding:6px 12px;border-radius:16px;text-decoration:none">Đang xem máy ${esc(dich.ten)} · về máy chủ</a>`, { html: true });
-      },
-    }).transform(r);
-  }
+  // Không chèn thanh "Đang xem máy ... · về máy chủ" nữa (22/11/2026): nhãn máy đã hiện ở thanh trên của giao diện.
   return r;
 }
 
