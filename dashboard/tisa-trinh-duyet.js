@@ -555,7 +555,12 @@
     ".tbd-pill:not(.gon){height:25px!important;min-height:25px!important;align-self:center}.tbd-pill:not(.gon) svg{width:13px;height:13px}" +
     ".tbd-pill{flex:0 1 auto!important;min-width:0}.tbd-pill span{overflow:hidden;text-overflow:ellipsis;min-width:0}.tbd-pill.gon span{display:none}.tbd-pill.gon{padding:0 9px!important}.tbd-pill i{display:none;width:8px;height:8px;border-radius:50%;background:#22c55e}.tbd-pill.on i{display:inline-block}@media (max-width:640px){.tbd-pill span{display:none}.tbd-pill{padding:0 9px!important;height:32px!important}.tbd-pill svg{width:16px!important;height:16px!important}}";
   // Mọi khung chat (Hỏi nhanh, từng cộng sự ở Hỏi chuyên gia, cuộc trò chuyện mới...) đều có nút: tìm mọi nút + của khung chat.
+  var HIEN_NUT_O_NHAP = false;      // 22/11/2026 (chủ): ô chat đã có nút Trình duyệt ở thanh trên (khung bên cạnh), nút "Trình duyệt AI" ở ô nhập là TRÙNG nên bỏ. Đặt true để bật lại.
   function chenNut() {
+    if (!HIEN_NUT_O_NHAP) {
+      Array.prototype.forEach.call(D.querySelectorAll(".tbd-pill"), function (b) { b.remove(); });
+      return;
+    }
     var ds = D.querySelectorAll("button.cp-plus:not(.tbd-pill), #plusBtn");
     if (!ds.length) return;
     if (!D.getElementById("tbd-css2")) { var st = D.createElement("style"); st.id = "tbd-css2"; st.textContent = CSS2; (D.head || D.documentElement).appendChild(st); }
