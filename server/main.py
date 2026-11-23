@@ -205,6 +205,7 @@ import channel_context   # metadata kênh + gom file trả về kênh chat (port
 import lang as lang_mod   # chốt ngôn ngữ trả lời cho một lượt
 import lang_registry      # sổ đăng ký: mọi thứ về một ngôn ngữ nằm đúng một chỗ
 import background_status  # việc nền còn sống của một khung chat + bắt lời hứa "xong em báo"
+import tisa_canh_gac_luot   # tin nhắn thêm mà lượt đứng im: báo tình hình thật sau 90 giây (V3.53)
 import tien_trinh_nen     # lệnh chạy ngầm engine bỏ lại: nhận theo dõi, xong tự báo + làm tiếp
 import turn_done_notice   # a long chat turn that finishes rings the bell (the owner has left the screen)
 import chatbot_log       # nhật ký hội thoại khách + thống kê câu bot trả lời không nổi
@@ -16692,7 +16693,77 @@ async def _khi_tien_trinh_xong(v: dict) -> None:
         print(f"[tien trinh nen] lượt nối tiếp lỗi: {type(e).__name__}: {e}", file=sys.stderr)
 
 
+async def _khi_tien_trinh_treo(v: dict) -> None:
+    """V3.56: một việc chạy nền ĐỨNG YÊN (CPU không nhúc nhích, không ghi tệp) quá 20 phút: nói thẳng với người dùng, rồi nhờ AI kiểm tra và chạy lại
+    bước kẹt. Không tự dừng tiến trình nào (chính sách repo: không tự cắt việc đang chạy); việc dừng/chạy lại do AI làm có kiểm tra."""
+    owner = str(v.get("chat_id") or "")
+    root = str(v.get("brain_root") or "")
+    mo_ta = str(v.get("mo_ta") or "tiến trình nền")
+    dung = tien_trinh_nen.thoi_luong(float(v.get("dung_giay") or 0))
+    sid = owner[len(WEB_CHAT_PREFIX):] if owner.startswith(WEB_CHAT_PREFIX) else ""
+    do_sau = int(v.get("do_sau") or 0)
+    runner = _NOI_TIEP_WEB.get(sid) if sid else None
+    se_nho_ai = runner is not None and do_sau < tien_trinh_nen.TRAN_NOI_TIEP
+    text = (f"Việc chạy nền đã đứng yên {dung}: không dùng CPU và không ghi thêm tệp nào.\n\n`{mo_ta}`\n\n"
+            "Có thể nó bị treo giữa chừng mà không báo lỗi. "
+            + ("TISA BOT đang nhờ AI kiểm tra và chạy lại bước bị kẹt, không cần nhắn." if se_nho_ai
+               else "Nhắn \"kiểm tra việc chạy nền\" để AI xem và xử lý."))
+    try:
+        await _notify_owner(owner, text, kind="answer", label="Việc chạy nền nghi bị treo", source="job",
+                            viec={"kind": "job", "status": "timeout", "title": mo_ta[:120], "id": str(v.get("id") or "")},
+                            brain=root, dedup=f"job:{v.get('id') or ''}:treo{int(v.get('so_lan_treo') or 1)}")
+    except Exception as e:
+        print(f"[tien trinh nen] báo treo lỗi: {type(e).__name__}: {e}", file=sys.stderr)
+    if not se_nho_ai:
+        return
+    nhac = (f"[Việc chạy nền nghi bị treo] `{mo_ta}` (nhóm tiến trình {v.get('pgid')}) đã đứng yên {dung}: tổng CPU của nhóm không tăng và thư mục làm việc "
+            "không có tệp nào được ghi. Có thể nó đang đợi bình thường (hàng đợi dựng chung, mạng) hoặc kẹt thật (vd ffmpeg đứng giữa chừng).\n"
+            f"Kiểm tra ngay: `ps -o pid,etime,time,stat,command -g {v.get('pgid')}`, và xem tệp đầu ra có lớn thêm không. "
+            "Kẹt thật (CPU không tăng, tệp đầu ra không lớn thêm) thì dừng ĐÚNG tiến trình kẹt rồi chạy lại bước đó, lệnh ffmpeg đặt `timeout 900`; "
+            "việc đang chạy bình thường thì KHÔNG dừng. Cuối cùng báo người dùng một câu: nó đã kẹt ở đâu, đã làm gì, bao lâu nữa xong.")
+    try:
+        t = asyncio.create_task(runner(nhac, do_sau + 1))
+        _PUSH_TASKS.add(t)
+        t.add_done_callback(_PUSH_TASKS.discard)
+    except Exception as e:
+        print(f"[tien trinh nen] lượt xử lý treo lỗi: {type(e).__name__}: {e}", file=sys.stderr)
+
+
+_HOI_TIEN_DO = re.compile(r"(làm|chạy|tới|đến|xong|được)\s*(tới|đến)?\s*(đâu|chưa|rồi chưa|chưa vậy|chưa em)|tiến độ|còn bao lâu|bao lâu nữa|sao\s+im|im\s+(ru|re)|đang\s+làm\s+gì|làm\s+chưa|xong\s+chưa|status|progress|how far", re.I)
+
+
+async def _canh_gac_steer(sid: str, item_id: int, som: bool = False) -> None:
+    """V3.53: người dùng nhắn thêm lúc lượt đang chạy. Lượt chỉ đọc tin sau mỗi bước làm; lượt đứng chờ (vd lệnh `tail -F` chờ dòng mới) thì tin nằm đó và
+    khung chat im ru. Sau 90 giây chưa ai đọc: nhìn cây tiến trình rồi nhắn một câu nói rõ tình hình và cách thoát. Báo tối đa 2 lần; KHÔNG tự ngắt lượt."""
+    lan = 0
+    try:
+        for moc in ((8, 90, 300) if som else (90, 300)):
+            while True:
+                t = _CHAT_RUNTIME.timing(sid)
+                if t is None or not steer_inbox.INBOX.unread(sid, item_id):
+                    return           # lượt đã xong (tin chạy ở lượt kế) hoặc lượt đã đọc tin
+                if time.time() - _gui_luc.get((sid, item_id), time.time()) >= moc:
+                    break
+                await asyncio.sleep(5)
+            t = _CHAT_RUNTIME.timing(sid)
+            if t is None:
+                return
+            obs = await asyncio.to_thread(tisa_canh_gac_luot.quan_sat, os.getpid(), t[0])
+            lan += 1
+            await push_to_chat(sid, tisa_canh_gac_luot.cau_bao(t[0], t[1], obs, lan, som=(som and lan == 1), viec=_CHAT_RUNTIME.hoat_dong(sid)))
+            if obs.get("ban") and not som:
+                return               # đang bận thật: một câu là đủ
+    except Exception as e:  # noqa: BLE001
+        print(f"[canh gac steer] {type(e).__name__}: {e}", file=sys.stderr)
+    finally:
+        _gui_luc.pop((sid, item_id), None)
+
+
+_gui_luc: dict = {}   # (phiên, mã tin) -> giờ tin được gửi
+
+
 tien_trinh_nen.dat_khi_xong(_khi_tien_trinh_xong)
+tien_trinh_nen.dat_khi_treo(_khi_tien_trinh_treo)
 
 
 @app.on_event("startup")
@@ -23465,6 +23536,11 @@ async def _chat_socket(ws):
                     _it = steer_inbox.INBOX.put(_sid, _txt, goal=_goal)
                     if _it:
                         _mode, _id = ("live" if steer_inbox.INBOX.live(_sid) else ("goal" if _goal else "after")), _it["id"]
+                        if not _goal:
+                            _gui_luc[(_sid, _it["id"])] = time.time()
+                            _tg = asyncio.create_task(_canh_gac_steer(_sid, _it["id"], som=bool(len(_txt) <= 160 and _HOI_TIEN_DO.search(_txt))))
+                            _PUSH_TASKS.add(_tg)
+                            _tg.add_done_callback(_PUSH_TASKS.discard)
                     elif _goal:
                         _mode, _id = "goal", 0
                     else:
