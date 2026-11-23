@@ -148,6 +148,87 @@ def tim(path):
     return None
 
 
+def _rel_nha(r: Path) -> str:
+    """Đường dẫn để khung chat gửi lại cho /files/raw: tính từ thư mục người dùng ("Desktop/...") cho gọn."""
+    try:
+        return r.relative_to(_nha()).as_posix()
+    except ValueError:
+        return r.as_posix()
+
+
+def xem_duong(p) -> dict | None:
+    """Cho trình xem tệp trong chat (/tisa-mo-tep/xem-duong): AI nhắc TÊN tệp trần, đường dẫn tệp hoặc thư mục nằm ở thư mục chủ đã cho xem.
+    Trả cùng dạng với phần bộ não ({loai, ten, files:[{path,name,size,sub}], cat}) hoặc None nếu không khớp gì. Chỉ đuôi media trong DUOI, chỉ trong thư mục danh sách."""
+    raw = str(p or "").strip().strip("`'\"").replace("\\", "/")
+    if not raw or len(raw) > 500 or "://" in raw or "\x00" in raw or ".." in raw.split("/"):
+        return None
+    dirs = _cac_thu_muc()
+    if not dirs:
+        return None
+
+    def mot(r: Path) -> dict:
+        return {"path": _rel_nha(r), "name": r.name, "size": r.stat().st_size, "sub": ""}
+
+    # 1. đường dẫn đầy đủ hoặc tính từ thư mục người dùng: tệp (qua tim) hoặc thư mục nằm trong danh sách
+    f = tim(raw)
+    if f is not None:
+        return {"loai": "tep", "ten": f.name, "files": [mot(f)], "cat": False}
+    for c in (Path("/" + raw.lstrip("/")), _nha() / raw.lstrip("/")):
+        try:
+            r = c.resolve()
+            if r.is_dir() and any(d == r or d in r.parents for d in dirs):
+                out, cat = [], False
+                for dp, dn, fn in os.walk(r):
+                    dn[:] = [x for x in sorted(dn) if not x.startswith(".")]
+                    if len(Path(dp).relative_to(r).parts) >= 4:
+                        dn[:] = []
+                    for n in sorted(fn):
+                        x = Path(dp) / n
+                        if n.startswith(".") or x.suffix.lower() not in DUOI or not x.is_file():
+                            continue
+                        if len(out) >= 300:
+                            cat = True
+                            break
+                        e = mot(x)
+                        e["sub"] = x.parent.relative_to(r).as_posix() if x.parent != r else ""
+                        out.append(e)
+                    if cat:
+                        break
+                if out:
+                    return {"loai": "thu-muc", "ten": r.name, "files": out, "cat": cat}
+        except (OSError, RuntimeError, ValueError):
+            continue
+    # 2. tên trần ("a.mp4") hoặc "thu-muc-con/a.mp4": dò theo tên trong các thư mục cho xem (sâu 4 tầng)
+    ten = raw.lstrip("/")
+    if Path(ten).suffix.lower() not in DUOI:
+        return None
+    dem, thay = 0, []
+    for d in dirs:
+        for dp, dn, fn in os.walk(d):
+            dn[:] = [x for x in dn if not x.startswith(".")]
+            if len(Path(dp).relative_to(d).parts) >= 4:
+                dn[:] = []
+            for n in fn:
+                dem += 1
+                if dem > 20000:
+                    break
+                x = Path(dp) / n
+                if n.startswith(".") or not (n.lower() == ten.lower() or x.as_posix().lower().endswith("/" + ten.lower())):
+                    continue
+                try:
+                    r = x.resolve()
+                    if r.is_file() and any(dd == r.parent or dd in r.parents for dd in dirs):
+                        thay.append(r)
+                except OSError:
+                    continue
+            if dem > 20000:
+                break
+    if not thay:
+        return None
+    thay.sort(key=lambda r: -r.stat().st_mtime)      # trùng tên: lấy bản mới nhất
+    return {"loai": "tep", "ten": thay[0].name, "files": [mot(thay[0])], "cat": False}
+
+
 def gan(app) -> None:
     from fastapi import Request
     from fastapi.responses import HTMLResponse, JSONResponse

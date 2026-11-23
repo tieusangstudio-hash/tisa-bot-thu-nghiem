@@ -6,6 +6,10 @@ Lịch sử phiên bản TISA BOT. Bản mới nhất ở trên cùng. Xem ngay 
 
 Định dạng: mỗi phiên bản là một khối `## [x.y.z] - ngày`, bên dưới nhóm thay đổi theo `### Thêm mới / Sửa lỗi / Cải thiện / Bảo mật`.
 
+## [0.617.16] - 2026-11-23
+### Sửa lỗi
+- **Bộ TISA V3.50:** Bấm xem được video, ảnh, âm thanh, PDF mà AI chép ra thư mục ngoài bộ não (vd Desktop/VIDEO DA DUNG): trước đây tên tệp trong chat chỉ là chữ trơ, không bấm được vì khung chat chỉ dò tên tệp trong bộ não. Nay tên tệp (tên trần, đường dẫn đầy đủ hoặc cả thư mục) nằm trong "Thư mục xem trong chat" sẽ hiện thẻ có ảnh/video thật, bấm mở trình xem. Thư mục nào chưa được thêm thì vẫn không xem được (thêm ở Hệ thống → "Thư mục xem trong chat"); sau khi thêm hoặc sau bản cập nhật, tải lại trang (Cmd+R) để tin cũ hiện thẻ.
+
 ## [0.617.15] - 2026-11-23
 ### Thêm mới
 - **Bộ TISA V3.49:** Dựng video nhanh gấp khoảng 3 lần (skill Edit Video Studio): bộ dựng `render.mjs` viết lại. Tự chia nhiều cảnh chạy cùng lúc (đã đo: 1 cảnh dù 2 hay 10 luồng vẫn ~12 khung/giây, nhiều cảnh cùng lúc mới nhanh), nhớ cảnh đã dựng nên sửa một cảnh chỉ dựng lại đúng cảnh đó, kiểm ảnh/video thiếu trước khi mở Chrome (báo ngay thay vì hỏng sau 10 phút), khoá chống hai tiến trình dựng đè cùng một cảnh, ghi file nguyên vẹn (không để lại file dở). Video 10 cảnh trước mất 9 đến 16 phút, nay khoảng 3 phút. Mỗi lần TISA BOT khởi động tự đưa bản mới vào skill đã cài (sao lưu bản cũ thành `render.mjs.truoc-V3.49`), và sửa 2 dòng hướng dẫn cho AI không đặt luồng cao, không mở hai tiến trình.
