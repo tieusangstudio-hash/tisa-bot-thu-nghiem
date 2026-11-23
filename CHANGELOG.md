@@ -6,6 +6,11 @@ Lịch sử phiên bản TISA BOT. Bản mới nhất ở trên cùng. Xem ngay 
 
 Định dạng: mỗi phiên bản là một khối `## [x.y.z] - ngày`, bên dưới nhóm thay đổi theo `### Thêm mới / Sửa lỗi / Cải thiện / Bảo mật`.
 
+## [0.617.15] - 2026-11-23
+### Thêm mới
+- **Bộ TISA V3.49:** Dựng video nhanh gấp khoảng 3 lần (skill Edit Video Studio): bộ dựng `render.mjs` viết lại. Tự chia nhiều cảnh chạy cùng lúc (đã đo: 1 cảnh dù 2 hay 10 luồng vẫn ~12 khung/giây, nhiều cảnh cùng lúc mới nhanh), nhớ cảnh đã dựng nên sửa một cảnh chỉ dựng lại đúng cảnh đó, kiểm ảnh/video thiếu trước khi mở Chrome (báo ngay thay vì hỏng sau 10 phút), khoá chống hai tiến trình dựng đè cùng một cảnh, ghi file nguyên vẹn (không để lại file dở). Video 10 cảnh trước mất 9 đến 16 phút, nay khoảng 3 phút. Mỗi lần TISA BOT khởi động tự đưa bản mới vào skill đã cài (sao lưu bản cũ thành `render.mjs.truoc-V3.49`), và sửa 2 dòng hướng dẫn cho AI không đặt luồng cao, không mở hai tiến trình.
+- **Bộ TISA V3.49:** Thư mục xem trong chat (Hệ thống → "Thư mục xem trong chat"): cho khung chat phát video, hiện ảnh, nghe âm thanh, mở PDF nằm ở thư mục anh chỉ định ngoài bộ não (vd video dựng xong để ở Desktop), trước đây hiện ô xám vì tệp ngoài bộ não bị khoá. Chỉ phục vụ đuôi video/ảnh/âm thanh/PDF trong đúng thư mục đã thêm, vẫn bắt đăng nhập; không cho thêm cả Desktop, cả thư mục người dùng, thư mục ẩn, Library hay nơi cài TISA BOT; không đi qua `../` hay liên kết ra ngoài.
+
 ## [0.617.14] - 2026-11-22
 ### Sửa lỗi
 - **Bộ TISA V3.48:** Khung Trình duyệt: AI không còn mở Chrome ở ngoài khi ô chat đã có khung Trình duyệt bên phải. Nguyên nhân: lệnh `mo_chrome` (mở Chrome hồ sơ thật) chạy thẳng, bỏ qua khung. Nay ô chat đã có khung thì `mo_chrome` tự đổi hướng sang mở trang ngay trong khung, `doi_trinh_duyet` bị khóa; ai cần Chrome thật thì chọn "Chrome của anh" ngay trong khung. Lời dặn AI cũng nói rõ: "mở bằng trình duyệt kế bên" chỉ cần `op=open`, không có thiết lập nào để đổi.
