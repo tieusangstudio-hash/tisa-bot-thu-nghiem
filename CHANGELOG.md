@@ -6,6 +6,23 @@ Lịch sử phiên bản TISA BOT. Bản mới nhất ở trên cùng. Xem ngay 
 
 Định dạng: mỗi phiên bản là một khối `## [x.y.z] - ngày`, bên dưới nhóm thay đổi theo `### Thêm mới / Sửa lỗi / Cải thiện / Bảo mật`.
 
+## [0.631.2] - 2026-11-23
+### Thêm mới
+- **Bộ TISA V3.58:** Quy trình sửa từng bước: gõ góp ý ở tab Quy trình, TISA BOT tự nhận ra đó là việc mới hay là sửa việc đang làm. Nếu là sửa thì chỉ chạy lại đúng bước liên quan, không chạy lại cả 5 bước. AI trả lời ngay cách hiểu của nó, làm MỘT bản mẫu cho anh xem, anh OK rồi mới làm lại cả bước. Nút "Lưu lại quy trình" ghi bài học theo từng bước để lần sau làm đúng ngay.
+- **Bộ TISA V3.58:** Trang Giao dự án gộp "Cần anh" và "Đang làm" thành một khung "Việc của đội" có 3 nút lọc (Cần anh, Đang làm, Văn phòng nói). Bảng tiến độ 4 cột vẫn còn qua nút "Bảng tiến độ 4 cột". Menu bỏ hai mục Cần anh và Đang làm trùng lặp, "Thư mục xem trong chat" chuyển sang nhóm Bộ não (sau Kho tư liệu), Team chuyển xuống nhóm Năng lực.
+- **Bộ TISA V3.58:** Tiết kiệm token khi chat với cộng sự có hồ sơ rất dài: mục nào quá dài chỉ nạp phần đầu kèm đường dẫn để cộng sự tự mở tệp khi cần chi tiết (hồ sơ dài nhất giảm khoảng 67% lời dặn, tắt được bằng `TISA_GON_HO_SO=0`); khôi phục ngữ cảnh chỉ dán tối đa 120.000 ký tự thay vì 300.000. Bot trả lời khách vẫn nạp đủ như cũ.
+### Sửa lỗi
+- **Bộ TISA V3.58:** Dòng báo "Em đang hiểu lại góp ý..." phía trên ô chat không còn bị cắt mép.
+- **Bộ TISA V3.58:** Sửa bảo mật phần quên mật khẩu; bot Zalo OA và Messenger tự lùi khi nhân viên đang trả lời khách; token dài hạn cho Claude; đăng bài Page hẹn giờ; thông báo điện thoại. Giao diện ô nhập chat giữ nguyên như bản cũ.
+
+## [0.617.13] - 2026-11-23
+### Ghi chú
+- **Bộ TISA V3.58:** Bản này gộp toàn bộ phần mới của bản 1 (nhãn "V3.50" bên bản 1, nâng lõi 0.631.1) vào bản 2. Bản 2 giữ nhãn riêng V3.50 đến V3.57 cho các bản trước đó nên bản gộp mang nhãn V3.58.
+
+## [0.617.23] - 2026-11-23
+### Sửa lỗi
+- **Bộ TISA V3.57:** AI báo tiến độ kiểu "Đang ghép bản V2... Xong bước này em sẽ render lại rồi giao" rồi việc chạy nền xong nhưng chat im hàng tiếng, tới khi người dùng nhắn "xong chưa" mới trả lời. Nguyên nhân: câu đó không khớp mẫu lời hứa (mẫu này cố ý hẹp) nên việc nền không được gắn cờ "làm tiếp khi xong". Nay câu báo tiến độ "đang render/ghép/dựng/chạy..." hoặc "xong em sẽ..." cũng mở lượt nối tiếp khi việc nền xong (vẫn có trần 3 lượt nối).
+
 ## [0.617.22] - 2026-11-23
 ### Sửa lỗi
 - **Bộ TISA V3.56:** Bấm xem video trong chat không còn ra ô xám/404 khi AI ghi tên tệp rút gọn kiểu `023_BacSiTuan_..._V4.mp4`. Dấu `...` (hoặc `…`, `*`) trong tên tệp nay là ký tự đại diện: máy chủ tìm trong các thư mục anh cho xem và hiện đủ các tệp khớp (bản nhẹ và bản Full HD), bấm là xem được; cùng tên ở hai thư mục (bản chép) chỉ hiện bản mới nhất. Đường dẫn viết tắt kiểu `VIDEO DA DUNG/x.mp4` cũng tìm được.
