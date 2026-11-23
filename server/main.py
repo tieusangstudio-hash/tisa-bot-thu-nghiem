@@ -23288,17 +23288,34 @@ async def _chat_socket(ws):
 
             Là một job chat bình thường của server, y như lượt tự chạy lại của limit_resume: tab
             nào đang mở cũng thấy nó stream, Stop được, kết quả lưu vào kho phiên. Người dùng
-            đang chat dở thì đợi lượt đó xong rồi mới chen vào (tối đa 10 phút), không cắt
-            ngang. Tin mở lượt được lưu như một tin người dùng có đánh dấu rõ, để mở lại hội
+            đang chat dở thì chờ tới 45 giây; còn bận thì bỏ lời nhắc vào hộp thư của lượt đó
+            (V3.51), không cắt ngang và không bỏ cuộc. Tin mở lượt được lưu như một tin người dùng có đánh dấu rõ, để mở lại hội
             thoại vẫn hiểu vì sao TISA BOT tự nói tiếp."""
-            for _ in range(120):
-                if not _CHAT_RUNTIME.get_job(conv_sid):
-                    break
-                await asyncio.sleep(5)
-            else:
-                await push_to_chat(conv_sid, "Việc chạy nền đã xong nhưng hội thoại bận quá lâu "
-                                   "nên chưa làm tiếp được. Nhắn \"làm tiếp\" để làm nốt.")
-                return
+            # V3.51 (23/11/2026): trước đây chờ tối đa 10 phút rồi BỎ CUỘC, bắt người dùng nhắn "làm tiếp". Đúng cảnh
+            # chủ báo: việc nền xong mà khung chat đang bận một lượt dài (người dùng hỏi "em làm tới đâu?" mở lượt mới,
+            # lượt đó chạy cả chục phút) thì việc dở nằm đó mãi cho tới khi có người nhắc. Giờ: rảnh sớm thì tự chạy
+            # như cũ; còn bận quá 45 giây thì bỏ lời nhắc vào HỘP THƯ của lượt đang chạy (steer_inbox): lượt đó đọc ở
+            # bước kế tiếp, hoặc nếu không kịp đọc thì chạy ngay sau khi lượt đó xong. Không bao giờ rơi mất.
+            cho = 0
+            while _CHAT_RUNTIME.get_job(conv_sid):
+                if cho >= 45:
+                    try:
+                        it = steer_inbox.INBOX.put(conv_sid, text)
+                    except Exception:
+                        it = None
+                    if it:
+                        _DO_SAU_NOI_TIEP[conv_sid] = int(do_sau or 0)
+                        try:
+                            store.append_message(conv_sid, "user", text)
+                        except Exception as _e:
+                            print(f"[noi tiep] ghi tin: {type(_e).__name__}: {_e}", file=sys.stderr)
+                        return
+                if cho >= 6 * 3600:
+                    await push_to_chat(conv_sid, "Việc chạy nền đã xong nhưng hội thoại bận suốt 6 giờ "
+                                       "nên chưa làm tiếp được. Nhắn \"làm tiếp\" để làm nốt.")
+                    return
+                await asyncio.sleep(3)
+                cho += 3
             store.append_message(conv_sid, "user", text)
             turn_tag = f"chat:{conv_sid[:12]}:{uuid.uuid4().hex[:8]}"
             _DO_SAU_NOI_TIEP[conv_sid] = int(do_sau or 0)

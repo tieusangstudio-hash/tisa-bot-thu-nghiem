@@ -6,6 +6,10 @@ Lịch sử phiên bản TISA BOT. Bản mới nhất ở trên cùng. Xem ngay 
 
 Định dạng: mỗi phiên bản là một khối `## [x.y.z] - ngày`, bên dưới nhóm thay đổi theo `### Thêm mới / Sửa lỗi / Cải thiện / Bảo mật`.
 
+## [0.617.17] - 2026-11-23
+### Sửa lỗi
+- **Bộ TISA V3.51:** Việc chạy nền xong rồi thì TISA BOT tự làm tiếp, không còn đứng im chờ anh nhắc "làm tiếp". Nguyên nhân: khi việc nền (vd dựng video) xong mà khung chat đang bận một lượt khác (vd anh hỏi "em làm tới đâu?" mở thêm một lượt chạy cả chục phút), phần làm tiếp chỉ chờ tối đa 10 phút rồi bỏ cuộc và báo "hội thoại bận quá lâu". Nay chờ ngắn thì tự chạy như cũ; bận quá 45 giây thì lời nhắc làm tiếp được bỏ vào hộp thư của lượt đang chạy (lượt đó đọc ở bước kế tiếp, hoặc chạy ngay sau khi lượt đó xong), không bao giờ rơi mất. Chỉ báo bỏ cuộc sau 6 giờ.
+
 ## [0.617.16] - 2026-11-23
 ### Sửa lỗi
 - **Bộ TISA V3.50:** Bấm xem được video, ảnh, âm thanh, PDF mà AI chép ra thư mục ngoài bộ não (vd Desktop/VIDEO DA DUNG): trước đây tên tệp trong chat chỉ là chữ trơ, không bấm được vì khung chat chỉ dò tên tệp trong bộ não. Nay tên tệp (tên trần, đường dẫn đầy đủ hoặc cả thư mục) nằm trong "Thư mục xem trong chat" sẽ hiện thẻ có ảnh/video thật, bấm mở trình xem. Thư mục nào chưa được thêm thì vẫn không xem được (thêm ở Hệ thống → "Thư mục xem trong chat"); sau khi thêm hoặc sau bản cập nhật, tải lại trang (Cmd+R) để tin cũ hiện thẻ.
