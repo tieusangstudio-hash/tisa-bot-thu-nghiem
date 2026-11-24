@@ -286,16 +286,7 @@ def xem_duong(p) -> dict | None:
 
 def gan(app) -> None:
     from fastapi import Request
-    from fastapi.responses import HTMLResponse, JSONResponse
-
-    trang = ROOT / "dashboard" / "tisa-thu-muc-xem.html"
-
-    @app.get("/tisa-thu-muc-xem/")
-    async def _trang():
-        try:
-            return HTMLResponse(trang.read_text(encoding="utf-8"), headers={"cache-control": "no-cache"})
-        except OSError:
-            return HTMLResponse("Thiếu trang Thư mục xem trong chat", status_code=500)
+    from fastapi.responses import JSONResponse
 
     @app.get("/tisa-thu-muc-xem/api/ds")
     async def _ds():

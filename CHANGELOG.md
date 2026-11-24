@@ -6,6 +6,10 @@ Lịch sử phiên bản TISA BOT. Bản mới nhất ở trên cùng. Xem ngay 
 
 Định dạng: mỗi phiên bản là một khối `## [x.y.z] - ngày`, bên dưới nhóm thay đổi theo `### Thêm mới / Sửa lỗi / Cải thiện / Bảo mật`.
 
+## [0.631.3] - 2026-11-24
+### Cải thiện
+- **Bộ TISA V3.59:** Bỏ mục "Thư mục xem trong chat" khỏi menu Bộ não và bỏ trang cài đặt của nó (chủ thấy không cần thiết). Máy nào đã thêm thư mục từ trước thì video, ảnh trong các thư mục đó vẫn xem được như cũ; máy chưa thêm thì không còn chỗ để thêm.
+
 ## [0.631.2] - 2026-11-23
 ### Thêm mới
 - **Bộ TISA V3.58:** Quy trình sửa từng bước: gõ góp ý ở tab Quy trình, TISA BOT tự nhận ra đó là việc mới hay là sửa việc đang làm. Nếu là sửa thì chỉ chạy lại đúng bước liên quan, không chạy lại cả 5 bước. AI trả lời ngay cách hiểu của nó, làm MỘT bản mẫu cho anh xem, anh OK rồi mới làm lại cả bước. Nút "Lưu lại quy trình" ghi bài học theo từng bước để lần sau làm đúng ngay.
