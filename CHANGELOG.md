@@ -6,6 +6,22 @@ Lịch sử phiên bản TISA BOT. Bản mới nhất ở trên cùng. Xem ngay 
 
 Định dạng: mỗi phiên bản là một khối `## [x.y.z] - ngày`, bên dưới nhóm thay đổi theo `### Thêm mới / Sửa lỗi / Cải thiện / Bảo mật`.
 
+## [0.631.4] - 2026-11-25
+### Ghi chú
+- **Bộ TISA V3.60:** Bản này gộp phần mới của bản 1 từ nhãn V3.51 đến V3.57 (lõi 0.631.8) vào bản 2. Bản 2 giữ nhãn V3.60. Mục "Thư mục xem trong chat" vẫn theo V3.59 của bản 2: ẩn khỏi menu nhưng máy đã thêm thư mục thì video, ảnh vẫn xem được.
+### Thêm mới
+- **Bộ TISA V3.60:** Quy trình có bước bị lỗi thì nhắn "chạy tiếp", "tiếp tục" hoặc "chạy từ bước 2" là chạy tiếp từ đúng bước hỏng, giữ kết quả các bước đã xong, không làm lại từ bước 1 (rất lâu trên máy Windows). Bước gặp lỗi tạm thời (quá tải, quá nhiều yêu cầu, rớt mạng) tự thử lại tối đa 2 lần, chờ 8 giây rồi 25 giây, chỉ khi bước chưa làm gì ra ngoài. Đặt `TISA_WORKFLOW_AUTO_RETRIES=0` để tắt.
+- **Bộ TISA V3.60:** Form Tạo quy trình dễ điền hơn: mỗi bước tách thành 4 ô có ví dụ mờ (Việc cần làm, Lấy thông tin từ đâu, Quy tắc, Kết quả mong muốn), có nút chữ i hướng dẫn và nút Điền ví dụ mẫu. Thẻ "đang chạy ngầm" hiện tên dễ hiểu, dòng tiến độ mới nhất và "ghi X giây trước"; việc quá 20 phút không ghi gì đổi màu cảnh báo.
+- **Bộ TISA V3.60:** Tệp `tisa_cham.log` ghi đúng chỗ nào làm TISA BOT đứng quá 2,5 giây (để gửi cho TISA khi máy chậm); `tisa.log` tự cắt khi quá 60 MB.
+### Cải thiện
+- **Bộ TISA V3.60:** Chat mượt hơn khi có công cụ kết nối hết hạn đăng nhập (HeyGen, Apify, Meta...): công cụ hỏng được nghỉ ít phút thay vì lượt nào cũng gõ cửa, có khi chờ tới 20 giây mới ra chữ đầu. Đồng bộ chat với bảng Đội Quân nhẹ hơn nhiều, máy yếu bớt giật.
+- **Bộ TISA V3.60:** Cuộc gọi bằng giọng nói chạy song song tối đa 3 việc, vượt thì báo rõ để giao lại sau.
+### Sửa lỗi
+- **Bộ TISA V3.60:** Quy trình ở tab Quy trình: nói "gửi qua đây", "gửi anh xem content" không còn bị hiểu thành góp ý sửa rồi hỏi lại mãi; nay gửi ngay kết quả lần chạy trước. Hỏi lại tối đa hai vòng. Kết quả mỗi bước lưu tối đa 20.000 chữ (trước là 4.000).
+- **Bộ TISA V3.60:** Mở TISA BOT nhanh hơn: gói chương trình đầu tiên không còn bị báo lỗi 404 mỗi lần mở trang.
+- **Bộ TISA V3.60:** Nói "ok làm đi", "làm luôn", "triển khai đi" lúc có việc đang chạy được làm thật, không bị coi là xác nhận suông.
+- **Bộ TISA V3.60:** Nút **Nói** lại viết lại câu cho đúng như trước; chuyển sang cộng sự khác lúc máy chậm không hiện nhầm cuộc trò chuyện của cộng sự trước. Khung trình duyệt cạnh chat không còn báo lỗi dài khi đóng giữa lúc gửi dữ liệu.
+
 ## [0.631.3] - 2026-11-24
 ### Cải thiện
 - **Bộ TISA V3.59:** Bỏ mục "Thư mục xem trong chat" khỏi menu Bộ não và bỏ trang cài đặt của nó (chủ thấy không cần thiết). Máy nào đã thêm thư mục từ trước thì video, ảnh trong các thư mục đó vẫn xem được như cũ; máy chưa thêm thì không còn chỗ để thêm.
