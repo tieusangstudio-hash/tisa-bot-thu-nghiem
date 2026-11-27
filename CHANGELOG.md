@@ -6,6 +6,10 @@ Lịch sử phiên bản TISA BOT. Bản mới nhất ở trên cùng. Xem ngay 
 
 Định dạng: mỗi phiên bản là một khối `## [x.y.z] - ngày`, bên dưới nhóm thay đổi theo `### Thêm mới / Sửa lỗi / Cải thiện / Bảo mật`.
 
+## [0.631.23] - 2026-11-28
+### Thêm mới
+- **Bộ TISA V3.79:** Đang gọi giọng nói mà giao việc rồi không cần nữa: mỗi việc trên thanh tình hình có nút **×**. Bấm là TISA BOT dừng thật đúng việc đó (thẻ Việc đóng lại, không báo lỗi, không đọc kết quả ra loa), các việc khác vẫn chạy tiếp. Dòng việc hiện "Đang dừng..." rồi "Đã dừng: ...".
+
 ## [0.631.22] - 2026-11-28
 ### Cải thiện
 - **Bộ TISA V3.78:** Nhiều máy dễ làm hơn cho người không rành công nghệ. Đầu trang hỏi "Đây là MÁY CHÍNH hay MÁY PHỤ". Máy chính chỉ còn 3 bước, mỗi bước một nút: (1) **Nhờ Đạt Đấu Nối lấy giúp** chìa khóa Cloudflare: Đạt tự mở Cloudflare, tạo token đúng quyền và cất kín vào máy, anh chỉ đăng nhập Cloudflare khi được hỏi; (2) **Tạo giúp mật khẩu dễ nhớ** cho bộ não, có nút Chép và ô xác nhận đã ghi lại; (3) **Dựng Trạm**. Bước nào xong tự hiện dấu ✓, còn thiếu gì trang nói rõ.
