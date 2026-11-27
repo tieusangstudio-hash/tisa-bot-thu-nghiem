@@ -6,6 +6,10 @@ Lịch sử phiên bản TISA BOT. Bản mới nhất ở trên cùng. Xem ngay 
 
 Định dạng: mỗi phiên bản là một khối `## [x.y.z] - ngày`, bên dưới nhóm thay đổi theo `### Thêm mới / Sửa lỗi / Cải thiện / Bảo mật`.
 
+## [0.631.21] - 2026-11-28
+### Sửa lỗi
+- **Bộ TISA V3.77:** Tên miền chạy chậm, báo "Đang kết nối lại máy chủ" rồi "Máy chủ TISA BOT đang tắt" dù máy chủ vẫn chạy: đường hầm Cloudflare mất hết kết nối nhưng tiến trình vẫn sống nên không tự nối lại. Nay cứ 30 giây TISA BOT hỏi đường hầm còn kết nối không, mất khoảng 2 phút liền thì tự khởi động lại đường hầm.
+
 ## [0.631.20] - 2026-11-27
 ### Sửa lỗi
 - **Bộ TISA V3.76:** Giọng đọc gọi đúng tên "TISA BOT" (đọc là Ti-sa Bót), không còn đọc thành "gia vít" nghe như Javis. Áp dụng cho nút Nghe thử, đọc câu trả lời và ghi chú giọng nói; cuộc gọi ChatGPT Live và Live qua API cũng được dặn đọc tên đúng. Phần nghe vẫn hiểu khi anh gọi nhầm thành Javis.
