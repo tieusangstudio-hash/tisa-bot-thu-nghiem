@@ -239,3 +239,6 @@ server/tisa_web/
 # Danh sách thư mục chủ cho xem thêm trong chat (tisa_thu_muc_xem.py): dữ liệu của từng máy, không lên repo.
 server/thu-muc-xem.json
 server/thu-muc-xem.tmp
+
+# Nhiều máy (tisa_nhieu_may.py): danh tính máy với Trạm, khóa máy đã mã hóa, sổ vai. Riêng từng máy, không bao giờ lên repo.
+server/nhieu-may/

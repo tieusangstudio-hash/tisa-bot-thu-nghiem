@@ -1,4 +1,4 @@
-"""tisa_nhieu_may.py - NHIỀU MÁY: một bộ não, nhiều máy chạy TISA BOT, một máy làm chủ (bản thử, chủ yêu cầu 21/11/2026).
+"""tisa_nhieu_may.py - NHIỀU MÁY: một bộ não, nhiều máy chạy TISA BOT, một máy làm chủ (chủ yêu cầu 21/11/2026; có trong bản học viên từ V3.72).
 
 Chủ muốn: máy yếu lo trả lời khách và viết content, máy mạnh dựng video; đi xa thì tắt máy công ty, bật máy khác làm máy chủ; đổi vai chỉ bằng
 cài đặt trong TISA BOT, tên miền cài một lần, máy phụ nhân bản từ máy chính thật đơn giản, chạy được cả Mac và Windows.
@@ -1260,10 +1260,14 @@ def _ten_may_he() -> str:
 
 
 def _lenh_cai() -> dict:
-    """Lệnh cài TISA BOT cho máy thứ 2, hiện ở bước "Thêm máy". Chỉ có khi bản này mang bộ cài thử nghiệm (packaging/thu-nghiem)."""
-    if not (ROOT / "packaging" / "thu-nghiem" / "cai-ban-thu.sh").is_file():
+    """Lệnh cài TISA BOT cho máy thứ 2, hiện ở bước "Thêm máy". Kho lấy theo nơi bản này được tải về (git remote), để máy phụ cài đúng bản
+    của máy chính. Bản mang bộ cài thử nghiệm (packaging/thu-nghiem) cài song song ở cổng 7790; bản thường (học viên, V3.72) dùng bộ cài
+    một dòng như lúc cài lần đầu, cổng 7777."""
+    thu = (ROOT / "packaging" / "thu-nghiem" / "cai-ban-thu.sh").is_file()
+    thuong = (ROOT / "packaging" / "macos" / "get-tisa-bot.sh").is_file()
+    if not thu and not thuong:
         return {}
-    kho = "tieusangstudio-hash/tisa-bot-thu-nghiem"
+    kho = "tieusangstudio-hash/tisa-bot-thu-nghiem" if thu else "tieusangstudio-hash/tisa-bot"
     try:
         r = subprocess.run(["git", "-C", str(ROOT), "remote", "get-url", "origin"], capture_output=True, text=True, timeout=10)
         m = re.search(r"github\.com[:/]([\w.-]+/[\w.-]+?)(?:\.git)?/?$", (r.stdout or "").strip())
@@ -1271,10 +1275,15 @@ def _lenh_cai() -> dict:
             kho = m.group(1)
     except Exception:  # noqa: BLE001
         pass
-    goc = "https://raw.githubusercontent.com/%s/main/packaging/thu-nghiem/" % kho
-    return {"mac": "curl -fsSL %scai-ban-thu.sh | bash" % goc,
-            "win": 'powershell -NoProfile -ExecutionPolicy Bypass -Command "irm %scai-ban-thu.ps1 | iex"' % goc,
-            "cong": 7790}
+    if thu:
+        goc = "https://raw.githubusercontent.com/%s/main/packaging/thu-nghiem/" % kho
+        return {"mac": "curl -fsSL %scai-ban-thu.sh | bash" % goc,
+                "win": 'powershell -NoProfile -ExecutionPolicy Bypass -Command "irm %scai-ban-thu.ps1 | iex"' % goc,
+                "cong": 7790}
+    goc = "https://raw.githubusercontent.com/%s/main/packaging/" % kho
+    return {"mac": "curl -fsSL %smacos/get-tisa-bot.sh | bash" % goc,
+            "win": 'powershell -NoProfile -ExecutionPolicy Bypass -Command "irm %swindows/get-tisa-bot.ps1 | iex"' % goc,
+            "cong": 7777}
 
 
 def _link_token() -> str:

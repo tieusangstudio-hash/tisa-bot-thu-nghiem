@@ -6,6 +6,10 @@ Lịch sử phiên bản TISA BOT. Bản mới nhất ở trên cùng. Xem ngay 
 
 Định dạng: mỗi phiên bản là một khối `## [x.y.z] - ngày`, bên dưới nhóm thay đổi theo `### Thêm mới / Sửa lỗi / Cải thiện / Bảo mật`.
 
+## [0.631.19] - 2026-11-27
+### Sửa lỗi
+- **Bộ TISA V3.75:** Nhiều máy: dựng Trạm trên tài khoản Cloudflare đã có Trạm TISA khác (ví dụ nhóm máy chạy bản học viên) thì tự đặt tên mới (tram-tisa-2...), kèm cơ sở dữ liệu và kho riêng, không ghi đè Trạm đang chạy.
+
 ## [0.631.18] - 2026-11-27
 ### Cải thiện
 - **Bộ TISA V3.74:** Tâm Tổng Quản tự đề xuất nhân sự mới. Khi giao việc mà trong đội chưa ai hợp chuyên môn (ví dụ hợp đồng, SEO kỹ thuật, tuyển dụng) và loại việc đó sẽ còn lặp lại, Tâm vẫn làm xong việc hôm nay, đồng thời lên mạng tìm kỹ năng có sẵn (kho công khai trên GitHub, không cần anh nối tài khoản GitHub; chỉ đọc, không chạy mã lạ) và trình một phần **Đề xuất tạo nhân sự mới** ghi rõ tên, việc, kỹ năng, nguồn và vì sao cần. Anh bấm **Duyệt** là Tâm tạo người đó (kỹ năng, hồ sơ, đăng ký lên bảng, chạy thử); bấm Sửa lại để đổi đề xuất; bỏ qua thì không tạo và Tâm không đề xuất lại.

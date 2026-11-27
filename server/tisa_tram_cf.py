@@ -97,17 +97,35 @@ def tai_khoan(cf: CF) -> dict:
     return ds[0]
 
 
-def _d1(cf: CF, acc: str) -> str:
-    d = cf.goi("GET", f"/accounts/{acc}/d1/database?name={TEN_D1}")
+def ten_trong(cf: CF, acc: str) -> str:
+    """Tên Worker cho Trạm MỚI (27/11/2026). Tài khoản Cloudflare đã có Trạm `tram-tisa` (ví dụ nhóm máy chạy bản khác của cùng chủ)
+    thì dựng Trạm mới là `tram-tisa-2`, `tram-tisa-3`...: dựng đè lên sẽ thay mã và khóa của Trạm đang chạy, các máy đang nối vào đó mất kết nối,
+    và hai nhóm máy dùng chung một cơ sở dữ liệu."""
+    d = cf.goi("GET", f"/accounts/{acc}/workers/scripts")
+    co = {str(x.get("id") or "") for x in (d.get("result") or [])}
+    for i in range(1, 10):
+        ten = TEN_WORKER if i == 1 else f"{TEN_WORKER}-{i}"
+        if ten not in co:
+            return ten
+    raise LoiCF("Tài khoản Cloudflare đã có 9 Trạm TISA. Xóa bớt Worker tram-tisa-... không dùng rồi dựng lại.")
+
+
+def _ten_phu(ten: str) -> tuple:
+    """(tên D1, tên kho R2) đi theo tên Worker: tram-tisa giữ tên cũ, tram-tisa-2 dùng tram-tisa-2 và tram-tisa-2-kho."""
+    return (TEN_D1, TEN_R2) if ten == TEN_WORKER else (ten, ten + "-kho")
+
+
+def _d1(cf: CF, acc: str, ten_d1: str = TEN_D1) -> str:
+    d = cf.goi("GET", f"/accounts/{acc}/d1/database?name={ten_d1}")
     for x in d.get("result") or []:
-        if x.get("name") == TEN_D1:
+        if x.get("name") == ten_d1:
             return x["uuid"]
-    d = cf.goi("POST", f"/accounts/{acc}/d1/database", {"name": TEN_D1})
+    d = cf.goi("POST", f"/accounts/{acc}/d1/database", {"name": ten_d1})
     return d["result"]["uuid"]
 
 
-def _r2(cf: CF, acc: str) -> None:
-    cf.goi("POST", f"/accounts/{acc}/r2/buckets", {"name": TEN_R2}, cho_phep=(10004,))   # 10004: đã có kho cùng tên
+def _r2(cf: CF, acc: str, ten_r2: str = TEN_R2) -> None:
+    cf.goi("POST", f"/accounts/{acc}/r2/buckets", {"name": ten_r2}, cho_phep=(10004,))   # 10004: đã có kho cùng tên
 
 
 def _subdomain(cf: CF, acc: str) -> str:
@@ -132,19 +150,19 @@ def _multipart(phan: list) -> tuple:
     return out, f"multipart/form-data; boundary={bd}"
 
 
-def dua_ma(cf: CF, acc: str, d1: str, quan_tri: str) -> None:
+def dua_ma(cf: CF, acc: str, d1: str, quan_tri: str, ten: str = TEN_WORKER) -> None:
     ma = MA_WORKER.read_bytes()
     meta = {"main_module": "tram-tisa.js", "compatibility_date": NGAY_TUONG_THICH,
             "bindings": [{"type": "d1", "name": "DB", "id": d1},
-                         {"type": "r2_bucket", "name": "KHO", "bucket_name": TEN_R2},
+                         {"type": "r2_bucket", "name": "KHO", "bucket_name": _ten_phu(ten)[1]},
                          {"type": "secret_text", "name": "QUAN_TRI", "text": quan_tri}]}
     body, ct = _multipart([("metadata", "", "application/json", json.dumps(meta).encode()),
                            ("tram-tisa.js", "tram-tisa.js", "application/javascript+module", ma)])
-    cf.goi("PUT", f"/accounts/{acc}/workers/scripts/{TEN_WORKER}", raw=body, content_type=ct)
-    cf.goi("POST", f"/accounts/{acc}/workers/scripts/{TEN_WORKER}/subdomain", {"enabled": True, "previews_enabled": False})
+    cf.goi("PUT", f"/accounts/{acc}/workers/scripts/{ten}", raw=body, content_type=ct)
+    cf.goi("POST", f"/accounts/{acc}/workers/scripts/{ten}/subdomain", {"enabled": True, "previews_enabled": False})
 
 
-def gan_ten_mien(cf: CF, acc: str, ten_mien: str) -> str:
+def gan_ten_mien(cf: CF, acc: str, ten_mien: str, ten: str = TEN_WORKER) -> str:
     h = (ten_mien or "").strip().lower().removeprefix("https://").removeprefix("http://").strip("/")
     if not re.fullmatch(r"[a-z0-9-]+(\.[a-z0-9-]+){2,}", h):
         raise LoiCF("Tên miền riêng phải là một tên miền con, ví dụ tisa.tenmien.com.")
@@ -156,11 +174,11 @@ def gan_ten_mien(cf: CF, acc: str, ten_mien: str) -> str:
     d = cf.goi("GET", f"/zones/{zs[0]['id']}/dns_records?name={h}")
     if d.get("result"):
         raise LoiCF(f"{h} đang được dùng (đã có bản ghi DNS). Chọn một tên miền con khác chưa dùng, Trạm không ghi đè bản ghi đang chạy.")
-    cf.goi("PUT", f"/accounts/{acc}/workers/domains", {"environment": "production", "hostname": h, "service": TEN_WORKER, "zone_id": zs[0]["id"]})
+    cf.goi("PUT", f"/accounts/{acc}/workers/domains", {"environment": "production", "hostname": h, "service": ten, "zone_id": zs[0]["id"]})
     return "https://" + h
 
 
-def dung(token: str, ten_mien: str = "", quan_tri: str = "", bao=None, api: str = API) -> dict:
+def dung(token: str, ten_mien: str = "", quan_tri: str = "", bao=None, api: str = API, ten: str = "") -> dict:
     """Dựng (hoặc cập nhật) Trạm. Trả {tram, quan_tri, ten_mien}. `quan_tri` rỗng thì sinh mới (lần đầu)."""
     def b(pt, chu):
         if bao:
@@ -168,19 +186,22 @@ def dung(token: str, ten_mien: str = "", quan_tri: str = "", bao=None, api: str 
     cf = CF(token, api)
     b(5, "Đang tìm tài khoản Cloudflare...")
     acc = tai_khoan(cf)["id"]
+    # Trạm mới (chưa có khóa dựng) thì chọn tên chưa ai dùng; cập nhật Trạm cũ (có khóa) thì giữ tên đã truyền vào.
+    ten = (ten or TEN_WORKER) if quan_tri else ten_trong(cf, acc)
+    ten_d1, ten_r2 = _ten_phu(ten)
     b(20, "Đang tạo cơ sở dữ liệu D1...")
-    d1 = _d1(cf, acc)
+    d1 = _d1(cf, acc, ten_d1)
     b(40, "Đang tạo kho R2...")
-    _r2(cf, acc)
+    _r2(cf, acc, ten_r2)
     quan_tri = quan_tri or secrets.token_urlsafe(32)
-    b(60, "Đang đưa Trạm lên Cloudflare...")
-    dua_ma(cf, acc, d1, quan_tri)
+    b(60, "Đang đưa Trạm lên Cloudflare" + ("" if ten == TEN_WORKER else f" (tên {ten}, vì tài khoản đã có Trạm khác)") + "...")
+    dua_ma(cf, acc, d1, quan_tri, ten)
     b(80, "Đang bật địa chỉ workers.dev...")
     sd = _subdomain(cf, acc)
-    tram = f"https://{TEN_WORKER}.{sd}.workers.dev"
+    tram = f"https://{ten}.{sd}.workers.dev"
     rieng = ""
     if ten_mien:
         b(90, "Đang gắn tên miền riêng...")
-        rieng = gan_ten_mien(cf, acc, ten_mien)
+        rieng = gan_ten_mien(cf, acc, ten_mien, ten)
     b(100, "Xong")
-    return {"tram": rieng or tram, "tram_workers_dev": tram, "quan_tri": quan_tri, "ten_mien": rieng}
+    return {"tram": rieng or tram, "tram_workers_dev": tram, "quan_tri": quan_tri, "ten_mien": rieng, "ten_worker": ten}
